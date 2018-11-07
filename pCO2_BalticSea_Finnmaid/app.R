@@ -7,7 +7,10 @@
 #    http://shiny.rstudio.com/
 #
 
-library(shiny)
+library(shiny, lib="K:/181102_interactive_dataviz_Finnmaid/lib")
+library(data.table, lib="K:/181102_interactive_dataviz_Finnmaid/lib")
+library(ggplot2, lib="K:/181102_interactive_dataviz_Finnmaid/lib")
+library(lubridate, lib="K:/181102_interactive_dataviz_Finnmaid/lib")
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -48,14 +51,19 @@ server <- function(input, output) {
       })
    output$scatterPlot <- renderPlot({
      # datamanagment
-     df.sub.mean <- df.sub[,.(
-     date = mean(as.numeric(date)),
+     #df <- data.table(read.csv("../Finnmaid_all_2003-2018.csv"))
+     #df$date <- ymd_hms(df$date)
+     #df.sub <- df[Lat = input$lat, Lon = input$lon, date = input$date]
+     
+     
+     df.sub.mean <- df[,.(
+     date = mean(date),
      mean.pCO2 = mean(pCO2, na.rm = TRUE),
      max.pCO2 = max(pCO2),
      min.pCO2 = min(pCO2)),
      by=.(ID)]
      # plot 
-     ggplot(df.sub.mean, aes(date, mean.pCO2, ymin=min.pCO2, ymax=max.pCO2))+
+     ggplot(df.sub.mean, aes(df.sub.mean$date, df.sub.mean$mean.pCO2, ymin=df.sub.mean$min.pCO2, ymax=df.sub.mean$max.pCO2))+
        geom_point()
      
      
