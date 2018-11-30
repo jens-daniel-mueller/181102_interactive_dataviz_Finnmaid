@@ -5,16 +5,21 @@
 # the ferry Finmaid starting in June 2003 until today. 
 #
 ##########################################################################
-# necessary packages
+# 00: load packages -- ---------------------------------------------------------
 library(shiny)
 library(data.table)
 library(ggplot2)
-library(lubridate)
 library(plyr)
 library(dplyr)
 library(maps)
 
-#necessary attributes for map plot
+# 01: load data -- -------------------------------------------------------------
+
+df <- data.table(read.csv("../Finnmaid_all_2003-2018.csv"))
+df$date<-as.Date(df$date)
+
+# 02: map attributes  -----------------------------------------------------------
+
 baltic.coastlines <- map_data('world', xlim = c(4, 29), ylim = c(50, 66))
 land.colour   <- "grey75"
 border.colour <- "grey10"
@@ -26,8 +31,7 @@ ymax=61
 # definition of routes to plot in map plot
 #Datamanagment
 #I chose one ID for each route (E,W,G,P,S) randomly and saved the corresponding data 
-# as individual route subsets and combined in the "routesubset" dataframe, where one example ID
-#for each route is saved
+# as individual route subsets 
 # This data is used in the depiction of routes in the map as an easy and fast(!) solution
 routeE<-df %>% 
   filter(ID == "06-06-22")
@@ -40,7 +44,7 @@ routeP<-df %>%
 routeS<-df %>% 
   filter(ID == "20150728")
 
-# Define UI for application that draws a histogram
+# 03: define UI --------------------------------------------------------------
 ui <- fluidPage(
    
    # Application title
@@ -63,17 +67,23 @@ ui <- fluidPage(
          numericInput("lat_low", label = "Lower Lattitude Limit[decimal degrees]",min= 53, max = 60, value = 54.1),
          numericInput("lat_high", "High Lattitude Limit[decimal degrees]:",min= 53, max= 60, value=60.2)
       ),
-      # Show a plot of the data
+      # Show plots of the data
       mainPanel(
          plotOutput("mapPlot"), 
          plotOutput("scatterPlot")
       )
    )
 )
-# Define server logic required to draw mapPlot and scatterPlot
+# 04: Server function ---------------------------------------------------------
+# Define server logic required to draw mapPlot and scatterPlot for mainpanel
 server <- function(input, output) {
 #Output Map 
 output$mapPlot <- renderPlot({
+  S=  subset(df, df$date >=input$daterange[1] & df$date <=input$daterange[2])
+  S= subset (S, S$Lon >= input$lon_low &
+               S$Lon <= input$lon_high &
+               S$Lat >=input$lat_low &
+               S$Lat <= input$lat_high)
      ggplot() + 
       coord_quickmap(xlim=c(xmin, xmax), ylim=c(ymin, ymax)) +
       geom_polygon(data=basemap, aes(x=long, y=lat, group=group), fill=land.colour, colour = border.colour, lwd=.5)+
@@ -87,10 +97,10 @@ output$mapPlot <- renderPlot({
 #Output ScatterPlot
 output$scatterPlot <- renderPlot({
   S=  subset(df, df$date >=input$daterange[1] & df$date <=input$daterange[2])
-  S= subset (S, S$Lon >= input$lon_low & 
-                S$Lon <= input$lon_high & 
-                S$Lat >=input$lat_low & 
-                S$Lat <= input$lat_high)  
+  S= subset (S, S$Lon >= input$lon_low &
+                S$Lon <= input$lon_high &
+                S$Lat >=input$lat_low &
+                S$Lat <= input$lat_high)
      df.sub.mean <- S[,.(
      date = mean(date),
      mean.pCO2 = mean(pCO2, na.rm = TRUE),
@@ -104,6 +114,6 @@ output$scatterPlot <- renderPlot({
    })
 }
 
-# Run the application 
+# 05: Run the app -----------------------------------------------------------
 shinyApp(ui = ui, server = server)
 
