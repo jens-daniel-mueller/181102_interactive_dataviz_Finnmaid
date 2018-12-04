@@ -15,8 +15,8 @@ library(maps)
 
 # 01: load data -- -------------------------------------------------------------
 
-df <- data.table(read.csv("../Finnmaid_all_2003-2018.csv"))
-df$date<-as.Date(df$date)
+#df <- data.table(read.csv("../Finnmaid_all_2003-2018.csv"))
+#df$date<-as.Date(df$date)
 
 # 02: map attributes  -----------------------------------------------------------
 
@@ -48,7 +48,7 @@ routeS<-df %>%
 ui <- fluidPage(
    
    # Application title
-   titlePanel("pCO2 in the Baltic Sea"),
+   titlePanel("Surface~water~pCO[2]~the~Central~Baltic~Sea"),
    
    # Sidebar with a slider input for date, lattitude and longitude
    sidebarLayout(
@@ -92,7 +92,8 @@ output$mapPlot <- renderPlot({
       geom_path(data= routeG,aes(x= routeG$Lon, y= routeG$Lat))+
       geom_path(data= routeP,aes(x= routeP$Lon, y= routeP$Lat))+
       geom_path(data= routeS,aes(x= routeS$Lon, y= routeS$Lat))+
-      geom_rect(data = S, mapping = aes(xmin= input$lon_low, xmax = input$lon_high, ymin=input$lat_low, ymax= input$lat_high), alpha= 0, color = "black")
+      geom_rect(data = S, mapping = aes(xmin= input$lon_low, xmax = input$lon_high, ymin=input$lat_low, ymax= input$lat_high), alpha= 0, color = "black")+
+      labs(x="Longitude (°E)", y="Latitude (°N)")
     })
 #Output ScatterPlot
 output$scatterPlot <- renderPlot({
@@ -110,7 +111,9 @@ output$scatterPlot <- renderPlot({
      by=.(ID)]
      # plot 
      ggplot(df.sub.mean, aes(df.sub.mean$date, df.sub.mean$mean.pCO2, ymin=df.sub.mean$min.pCO2, ymax=df.sub.mean$max.pCO2))+
-       geom_point()
+       geom_point()+
+       ylim(0,800)+
+       labs(y=expression(pCO[2]~(µatm)), x="Date")
    })
 }
 
