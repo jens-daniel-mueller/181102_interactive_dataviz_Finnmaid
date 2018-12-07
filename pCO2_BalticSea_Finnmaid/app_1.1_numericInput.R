@@ -30,7 +30,6 @@ xmax= 31.5
 ymin=53.5
 ymax=61
 # definition of routes to plot in map plot
-#Datamanagment
 #I chose one ID for each route (E,W,G,P,S) randomly and saved the corresponding data 
 # as individual route subsets 
 # This data is used in the depiction of routes in the map as an easy and fast(!) solution
@@ -82,12 +81,7 @@ ui <- fluidPage(
 server <- function(input, output) {
 #Output Map 
 output$mapPlot <- renderPlot({
-    Sub <- df %>% 
-    filter(date >=input$daterange[1] & df$date <=input$daterange[2] & 
-             Lon >= input$lon_low & Lon <= input$lon_high &
-             Lat >=input$lat_low & Lat <= input$lat_high) %>% 
-    dplyr::select(date,Lon,Lat,pCO2,Tem,ID)
-    
+
      ggplot() + 
       coord_quickmap(xlim=c(xmin, xmax), ylim=c(ymin, ymax)) +
       geom_polygon(data=basemap, aes(x=long, y=lat, group=group), fill=land.colour, colour = border.colour, lwd=.5)+
@@ -102,43 +96,59 @@ output$mapPlot <- renderPlot({
 #Output ScatterPlot_pCO2
 output$scatterPlot_pCO2 <- renderPlot({
   
-  Sub <- df %>% 
-    filter(date >=input$daterange[1] & df$date <=input$daterange[2] & 
+  Sub_pCO2 <- df %>% 
+    filter(date >=input$daterange[1] & date <=input$daterange[2] & 
              Lon >= input$lon_low & Lon <= input$lon_high &
              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
   dplyr::select(date,Lon,Lat,pCO2,Tem,ID)
     
-  df.sub.mean.pCO2 <- Sub %>% 
+  df.sub.mean.pCO2 <- Sub_pCO2 %>% 
     group_by(ID) %>% 
-    summarise_all(funs(mean)) %>% 
-    select(date, pCO2)
+    summarise_all(funs(mean, "mean", mean(., na.rm = TRUE))) %>% 
+    select(date_mean, pCO2_mean)
   
- ggplot(df.sub.mean.pCO2, aes(df.sub.mean.pCO2$date, df.sub.mean.pCO2$pCO2))+
+ ggplot(df.sub.mean.pCO2, aes(df.sub.mean.pCO2$date_mean, df.sub.mean.pCO2$pCO2_mean))+
     geom_point()+
-    ylim(0,800)
-   labs(y=expression(pCO[2]~(µatm)), x="Date")
+    ylim(0,800)+
+    labs(y=expression(pCO[2]~(µatm)), x="Date")
      })
 
 #Output scatterPlot_temp
 output$scatterPlot_temp <- renderPlot({
   
-  Sub <- df %>% 
-    filter(date >=input$daterange[1] & df$date <=input$daterange[2] & 
+  Sub_temp <- df %>% 
+    filter(date >=input$daterange[1] & date <=input$daterange[2] & 
              Lon >= input$lon_low & Lon <= input$lon_high &
              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-  dplyr::select(date,Lon,Lat,pCO2,Tem,ID)
+    select(date,Lon,Lat,pCO2,Tem,ID)
   
-  df.sub.mean.temp <- Sub %>% 
+  df.sub.mean.temp <- Sub_temp %>% 
     group_by(ID) %>% 
-    summarise_all(funs(mean)) %>% 
-    select(date, Tem)
+    summarise_all(funs(mean, "mean", mean(., na.rm = TRUE))) %>% 
+    select(date_mean, Tem_mean)
   
-  ggplot(df.sub.mean.temp, aes(df.sub.mean.temp$date, df.sub.mean.temp$Tem))+
+  ggplot(df.sub.mean.temp, aes(df.sub.mean.temp$date_mean, df.sub.mean.temp$Tem_mean))+
     geom_point()+
     labs(y= "Temperature [°C]", x="Date")
-  
 })
 #Output scatterPlot_cO2
+# output$scatterPlot_cO2 <- renderPlot({
+#   
+#   Sub_cO2 <- df %>% 
+#     filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+#              Lon >= input$lon_low & Lon <= input$lon_high &
+#              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+#     select(date,Lon,Lat,pCO2,Tem,ID,cO2)
+#   
+#   df.sub.mean.cO2 <- Sub_CO2 %>% 
+#     group_by(ID) %>% 
+#     summarise_all(funs(mean, "mean", mean(., na.rm = TRUE))) %>% 
+#     select(date_mean, cO2_mean)
+#   
+#   ggplot(df.sub.mean.cO2, aes(df.sub.mean.cO2$date_mean, df.sub.mean.cO2$CO2_mean))+
+#     geom_point()+
+#     labs(y= "cO2", x="Date")
+# })
 }
 
 # 05: Run the app -----------------------------------------------------------
