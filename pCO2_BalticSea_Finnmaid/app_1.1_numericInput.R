@@ -7,6 +7,7 @@
 ##########################################################################
 # 00: load packages -- ---------------------------------------------------------
 library(shiny)
+library(base)
 library(data.table)
 library(ggplot2)
 library(plyr)
@@ -16,7 +17,7 @@ library(plotly)
 
 # 01: load data -- -------------------------------------------------------------
 
-df <- data.table(read.csv("../Finnmaid_all_2003-2018.csv"))
+#df <- data.table(read.csv("../Finnmaid_all_2003-2018.csv"))
 df$date<-as.Date(df$date)
 
 # 02: map attributes  -----------------------------------------------------------
@@ -29,6 +30,7 @@ xmin= 10
 xmax= 31.5
 ymin=53.5
 ymax=61
+
 # definition of routes to plot in map plot
 #I chose one ID for each route (E,W,G,P,S) randomly and saved the corresponding data 
 # as individual route subsets 
@@ -43,12 +45,11 @@ routeP<-df %>%
   filter(ID == "20131111")
 routeS<-df %>% 
   filter(ID == "20150728")
-
 # 03: define UI --------------------------------------------------------------
 ui <- fluidPage(
    
    # Application title
-  titlePanel("Surface~water~pCO[2]~the~Central~Baltic~Sea"),
+  titlePanel(title = "Surface water pCO2 of the Central Baltic Sea"),
    
    # Sidebar with a slider input for date, lattitude and longitude
    sidebarLayout(
@@ -62,17 +63,18 @@ ui <- fluidPage(
           max= as.Date("2018-07-16 05:10:55"),
           format= "yyyy/mm/dd",
           separator="to"),
-         numericInput("lon_low", label = "Lower Longitude Limit[decimal degrees]",min= 10, max = 30, value = 10.1),
-         numericInput("lon_high", "High Longitude Limit[decimal degrees]:",min= 10, max = 30, value = 30.2),
-         numericInput("lat_low", label = "Lower Lattitude Limit[decimal degrees]",min= 53, max = 60, value = 54.1),
-         numericInput("lat_high", "High Lattitude Limit[decimal degrees]:",min= 53, max= 60, value=60.2)
-      ),
+         numericInput("lon_low", label = "Lower Longitude Limit[decimal degrees]",min= 10, max = 30, value = 19.5),
+         numericInput("lon_high", "High Longitude Limit[decimal degrees]:",min= 10, max = 30, value = 21),
+         numericInput("lat_low", label = "Lower Lattitude Limit[decimal degrees]",min= 53, max = 60, value = 57.5),
+         numericInput("lat_high", "High Lattitude Limit[decimal degrees]:",min= 53, max= 60, value=59),
+         submitButton("Apply Change")
+         ),
       # Show plots of the data
       mainPanel(
         plotOutput("mapPlot"), 
-        plotOutput("scatterPlot_pCO2"),
-        plotOutput("scatterPlot_temp"),
-        plotOutput("scatterPlot_cO2")
+        plotlyOutput("scatterPlot_pCO2", width = "100%"),
+        plotlyOutput("scatterPlot_temp", width = "100%")
+        
       )
    )
 )
@@ -90,11 +92,13 @@ output$mapPlot <- renderPlot({
       geom_path(data= routeG,aes(x= routeG$Lon, y= routeG$Lat))+
       geom_path(data= routeP,aes(x= routeP$Lon, y= routeP$Lat))+
       geom_path(data= routeS,aes(x= routeS$Lon, y= routeS$Lat))+
-      geom_rect(data=data.frame(),mapping = aes(xmin= input$lon_low, xmax = input$lon_high, ymin=input$lat_low, ymax= input$lat_high),color="red", fill=NA)+
-      labs(x="Longitude (°E)", y="Latitude (°N)")
+      geom_rect(data=data.frame(),mapping = aes(xmin= input$lon_low, xmax = input$lon_high, ymin=input$lat_low, ymax= input$lat_high), fill= "blue", alpha = 0.2
+                )+
+      labs(x="Longitude (°E)", y="Latitude (°N)")+
+      theme_dark()
     })
 #Output ScatterPlot_pCO2
-output$scatterPlot_pCO2 <- renderPlot({
+output$scatterPlot_pCO2 <- renderPlotly({
   
   Sub_pCO2 <- df %>% 
     filter(date >=input$daterange[1] & date <=input$daterange[2] & 
@@ -104,17 +108,30 @@ output$scatterPlot_pCO2 <- renderPlot({
     
   df.sub.mean.pCO2 <- Sub_pCO2 %>% 
     group_by(ID) %>% 
-    summarise_all(funs(mean, "mean", mean(., na.rm = TRUE))) %>% 
+    summarise_all(funs(mean, "mean", mean(., na.rm = FALSE))) %>% 
     select(date_mean, pCO2_mean)
   
- ggplot(df.sub.mean.pCO2, aes(df.sub.mean.pCO2$date_mean, df.sub.mean.pCO2$pCO2_mean))+
-    geom_point()+
-    ylim(0,800)+
-    labs(y=expression(pCO[2]~(µatm)), x="Date")
-     })
+  df.sub.min.max.pCO2 <- Sub_pCO2 %>% 
+    group_by(ID) %>% 
+    summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
+    select(pCO2_min, pCO2_max)
+  
+  df.sub.pCO2<-bind_cols(df.sub.mean.pCO2,df.sub.min.max.pCO2)
+  
+  ggplotly(
+    ggplot(df.sub.pCO2, mapping= aes(df.sub.pCO2$date_mean, df.sub.pCO2$pCO2_mean))+
+      geom_ribbon(mapping= aes(ymin= df.sub.pCO2$pCO2_min, ymax= df.sub.pCO2$pCO2_max),fill = "blue", alpha = 0.2)+
+      geom_line(aes(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_mean))+
+      labs(y="pCO2[µatm]", x="Date")+
+     scale_y_continuous(
+     labels = scales::number_format(accuracy = 0.1))+
+     theme_dark()
+          )
+       })
+
 
 #Output scatterPlot_temp
-output$scatterPlot_temp <- renderPlot({
+output$scatterPlot_temp <- renderPlotly({
   
   Sub_temp <- df %>% 
     filter(date >=input$daterange[1] & date <=input$daterange[2] & 
@@ -124,33 +141,27 @@ output$scatterPlot_temp <- renderPlot({
   
   df.sub.mean.temp <- Sub_temp %>% 
     group_by(ID) %>% 
-    summarise_all(funs(mean, "mean", mean(., na.rm = TRUE))) %>% 
+    summarise_all(funs(mean, "mean", mean(., na.rm = FALSE))) %>% 
     select(date_mean, Tem_mean)
   
-  ggplot(df.sub.mean.temp, aes(df.sub.mean.temp$date_mean, df.sub.mean.temp$Tem_mean))+
-    geom_point()+
-    labs(y= "Temperature [°C]", x="Date")
+  df.sub.min.max.temp <- Sub_temp %>% 
+    group_by(ID) %>% 
+    summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
+    select(Tem_min, Tem_max)
+  
+  df.sub.temp<-bind_cols(df.sub.mean.temp,df.sub.min.max.temp)
+  
+  ggplotly(
+  ggplot(df.sub.temp, aes(df.sub.temp$date_mean, df.sub.temp$Tem_mean))+
+    geom_ribbon(df.sub.temp,mapping= aes(ymin= df.sub.temp$Tem_min, ymax= df.sub.temp$Tem_max),fill = "blue", alpha = 0.2)+
+    geom_line(aes(x= df.sub.temp$date_mean, y= df.sub.temp$Tem_mean))+
+    labs(y= "Temperature[°C]", x="Date")+
+    scale_y_continuous(
+      labels = scales::number_format(accuracy = 0.1))+
+    theme_dark()
+         )
 })
-#Output scatterPlot_cO2
-# output$scatterPlot_cO2 <- renderPlot({
-#   
-#   Sub_cO2 <- df %>% 
-#     filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-#              Lon >= input$lon_low & Lon <= input$lon_high &
-#              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-#     select(date,Lon,Lat,pCO2,Tem,ID,cO2)
-#   
-#   df.sub.mean.cO2 <- Sub_CO2 %>% 
-#     group_by(ID) %>% 
-#     summarise_all(funs(mean, "mean", mean(., na.rm = TRUE))) %>% 
-#     select(date_mean, cO2_mean)
-#   
-#   ggplot(df.sub.mean.cO2, aes(df.sub.mean.cO2$date_mean, df.sub.mean.cO2$CO2_mean))+
-#     geom_point()+
-#     labs(y= "cO2", x="Date")
-# })
 }
-
 # 05: Run the app -----------------------------------------------------------
 shinyApp(ui = ui, server = server)
 
