@@ -149,17 +149,20 @@ output$scatterPlot_temp <- renderPlotly({
     summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
     select(Tem_min, Tem_max)
   
-  df.sub.temp<-bind_cols(df.sub.mean.temp,df.sub.min.max.temp)
   
-  ggplotly(
-  ggplot(df.sub.temp, aes(df.sub.temp$date_mean, df.sub.temp$Tem_mean))+
-    geom_ribbon(df.sub.temp,mapping= aes(ymin= df.sub.temp$Tem_min, ymax= df.sub.temp$Tem_max),fill = "blue", alpha = 0.2)+
+  df.sub.temp<-bind_cols(df.sub.mean.temp,df.sub.min.max.temp)
+  df.sub.temp$date_mean<-as.Date(df.sub.temp$date_mean)
+  
+  p<-ggplotly(
+  ggplot(df.sub.temp)+
+    geom_ribbon(data= data.frame(df.sub.temp), mapping= aes(x= df.sub.temp$date_mean, ymin= df.sub.temp$Tem_min, ymax= df.sub.temp$Tem_max),fill = "blue", alpha = 0.2, na.rm= TRUE)+
     geom_line(aes(x= df.sub.temp$date_mean, y= df.sub.temp$Tem_mean))+
     labs(y= "Temperature[°C]", x="Date")+
     scale_y_continuous(
       labels = scales::number_format(accuracy = 0.01))+
     theme_dark()
          )
+  style(p, hoverinfo = "none", traces = 1)
 })
 }
 # 05: Run the app -----------------------------------------------------------
