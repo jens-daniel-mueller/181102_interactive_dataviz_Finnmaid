@@ -157,7 +157,7 @@ output$scatterPlot_temp <- renderPlotly({
     geom_line(aes(x= df.sub.temp$date_mean, y= df.sub.temp$Tem_mean))+
     labs(y= "Temperature[°C]", x="Date")+
     scale_y_continuous(
-      labels = scales::number_format(accuracy = 0.1))+
+      labels = scales::number_format(accuracy = 0.01))+
     theme_dark()
          )
 })
