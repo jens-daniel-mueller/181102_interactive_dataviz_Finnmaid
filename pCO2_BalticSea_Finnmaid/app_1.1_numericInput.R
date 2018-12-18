@@ -49,8 +49,8 @@ routeS<-df %>%
 ui <- fluidPage(
    
    # Application title
-  titlePanel(title = "Surface water pCO2 of the Central Baltic Sea"),
-   
+  #titlePanel(title = "Surface water pCO2 of the Central Baltic Sea"),
+  titlePanel(title=div(img(src="title.png"), " ")),
    # Sidebar with a slider input for date, lattitude and longitude
    sidebarLayout(
      sidebarPanel(
@@ -72,8 +72,7 @@ ui <- fluidPage(
       # Show plots of the data
       mainPanel(
         plotOutput("mapPlot"), 
-        plotlyOutput("scatterPlot_pCO2", width = "100%"),
-        plotlyOutput("scatterPlot_temp", width = "100%")
+        plotlyOutput("scatterPlot_pCO2_temp" )
         
       )
    )
@@ -94,11 +93,13 @@ output$mapPlot <- renderPlot({
       geom_path(data= routeS,aes(x= routeS$Lon, y= routeS$Lat))+
       geom_rect(data=data.frame(),mapping = aes(xmin= input$lon_low, xmax = input$lon_high, ymin=input$lat_low, ymax= input$lat_high), fill= "blue", alpha = 0.2
                 )+
-      labs(x="Longitude (°E)", y="Latitude (°N)")+
-      theme_dark()
+      labs(x="Longitude (°E)", y="Latitude (°N)", size = 2)+
+      theme_minimal()
     })
-#Output ScatterPlot_pCO2
-output$scatterPlot_pCO2 <- renderPlotly({
+#Output ScatterPlot_pCO2_temp
+output$scatterPlot_pCO2_temp <- renderPlotly({
+  
+  ###subplot pCO2
   
   Sub_pCO2 <- df %>% 
     filter(date >=input$daterange[1] & date <=input$daterange[2] & 
@@ -118,20 +119,22 @@ output$scatterPlot_pCO2 <- renderPlotly({
   
   df.sub.pCO2<-bind_cols(df.sub.mean.pCO2,df.sub.min.max.pCO2)
   
-  ggplotly(
-    ggplot(df.sub.pCO2, mapping= aes(df.sub.pCO2$date_mean, df.sub.pCO2$pCO2_mean))+
-      geom_ribbon(mapping= aes(ymin= df.sub.pCO2$pCO2_min, ymax= df.sub.pCO2$pCO2_max),fill = "blue", alpha = 0.2)+
-      geom_line(aes(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_mean))+
-      labs(y="pCO2[µatm]", x="Date")+
-     scale_y_continuous(
-     labels = scales::number_format(accuracy = 0.1))+
-     theme_dark()
-          )
-       })
-
-
-#Output scatterPlot_temp
-output$scatterPlot_temp <- renderPlotly({
+  ## information for axis titles
+  a <- list(
+    title = "Date",
+    showticklabels = TRUE)
+  b<- list (
+    title = "pCO2[µatm]",
+    showticklabels = TRUE)
+  
+  
+  p1<-plot_ly(df.sub.pCO2, x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_mean, name = "mean pCO2") %>% 
+    add_ribbons( ymin= df.sub.pCO2$pCO2_min, ymax= df.sub.pCO2$pCO2_max, name= "Min and Max", color= I("blue"), alpha = 0.5) %>% 
+    add_lines(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_mean, color= I("black")) %>% 
+    layout(xaxis= a, yaxis = b)
+  
+  ###subplot Temperature
+  
   
   Sub_temp <- df %>% 
     filter(date >=input$daterange[1] & date <=input$daterange[2] & 
@@ -153,17 +156,23 @@ output$scatterPlot_temp <- renderPlotly({
   df.sub.temp<-bind_cols(df.sub.mean.temp,df.sub.min.max.temp)
   df.sub.temp$date_mean<-as.Date(df.sub.temp$date_mean)
   
-  p<-ggplotly(
-  ggplot(df.sub.temp)+
-    geom_ribbon(data= data.frame(df.sub.temp), mapping= aes(x= df.sub.temp$date_mean, ymin= df.sub.temp$Tem_min, ymax= df.sub.temp$Tem_max),fill = "blue", alpha = 0.2, na.rm= TRUE)+
-    geom_line(aes(x= df.sub.temp$date_mean, y= df.sub.temp$Tem_mean))+
-    labs(y= "Temperature[°C]", x="Date")+
-    scale_y_continuous(
-      labels = scales::number_format(accuracy = 0.01))+
-    theme_dark()
-         )
-  style(p, hoverinfo = "none", traces = 1)
-})
+  a <- list(
+    title = "Date",
+    showticklabels = TRUE)
+  b<- list (
+    title = "Temperature [°C]",
+    showticklabels = TRUE)
+
+  p2<-plot_ly(df.sub.temp, name = "mean temperature") %>% 
+    add_ribbons(x= df.sub.temp$date_mean, ymin= df.sub.temp$Tem_min, ymax= df.sub.temp$Tem_max, name= "Min and Max", color= I("blue"), alpha = 0.5, na.rm = TRUE) %>% 
+    add_lines(x= df.sub.temp$date_mean, y= df.sub.temp$Tem_mean, color= I("black"))  %>% 
+    layout(xaxis= a, yaxis = b)
+   
+
+  ###produce plot
+  p<-subplot(p1,p2, nrows= 2, shareX = TRUE, titleY = TRUE) %>% 
+    hide_legend()
+       })
 }
 # 05: Run the app -----------------------------------------------------------
 shinyApp(ui = ui, server = server)
