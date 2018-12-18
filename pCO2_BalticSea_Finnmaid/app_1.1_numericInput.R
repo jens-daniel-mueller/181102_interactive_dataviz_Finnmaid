@@ -130,7 +130,7 @@ output$scatterPlot_pCO2_temp <- renderPlotly({
   
   p1<-plot_ly(df.sub.pCO2, x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_mean, name = "mean pCO2") %>% 
     add_ribbons( ymin= df.sub.pCO2$pCO2_min, ymax= df.sub.pCO2$pCO2_max, name= "Min and Max", color= I("blue"), alpha = 0.5) %>% 
-    add_lines(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_mean, color= I("black")) %>% 
+    add_lines(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_mean, color= I("black"), connectgaps = FALSE) %>% 
     layout(xaxis= a, yaxis = b)
   
   ###subplot Temperature
@@ -163,9 +163,9 @@ output$scatterPlot_pCO2_temp <- renderPlotly({
     title = "Temperature [°C]",
     showticklabels = TRUE)
 
-  p2<-plot_ly(df.sub.temp, name = "mean temperature") %>% 
+  p2<-plot_ly(df.sub.temp, name = "mean temperature", type = 'scatter', mode = 'lines') %>% 
     add_ribbons(x= df.sub.temp$date_mean, ymin= df.sub.temp$Tem_min, ymax= df.sub.temp$Tem_max, name= "Min and Max", color= I("blue"), alpha = 0.5, na.rm = TRUE) %>% 
-    add_lines(x= df.sub.temp$date_mean, y= df.sub.temp$Tem_mean, color= I("black"))  %>% 
+    add_lines(x= df.sub.temp$date_mean, y= df.sub.temp$Tem_mean, color= I("black"), connectgaps = FALSE)  %>% 
     layout(xaxis= a, yaxis = b)
    
 
