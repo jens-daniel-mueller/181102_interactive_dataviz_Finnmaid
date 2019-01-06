@@ -72,7 +72,8 @@ ui <- fluidPage(
       # Show plots of the data
       mainPanel(
         plotOutput("mapPlot"), 
-        plotlyOutput("scatterPlot_pCO2_temp" )
+        plotlyOutput("scatterPlot_pCO2_temp" ),
+        textOutput("ValuesPerPoint")
         
       )
    )
@@ -80,6 +81,24 @@ ui <- fluidPage(
 # 04: Server function ---------------------------------------------------------
 # Define server logic required to draw mapPlot and scatterPlot for mainpanel
 server <- function(input, output) {
+  
+  output$ValuesPerPoint <- renderText({
+    
+    Sub <- df %>% 
+      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+               Lon >= input$lon_low & Lon <= input$lon_high &
+               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+      dplyr::select(date,Lon,Lat,pCO2,Tem,ID)
+    
+    df.sub.mean <- Sub %>% 
+      group_by(ID) %>% 
+      summarise_all(funs(mean, "mean", mean(., na.rm = FALSE))) %>% 
+      select(date_mean, pCO2_mean)
+    
+    paste("One datapoint represents one crossing of the ferry 'Finnmaid'. Data gets collected every minute. Depending on your selection a different number of measurments are averaged to represent the crossing.
+           The mean number of values per datapoint for your selection is", round((nrow(Sub)/nrow(df.sub.mean))), ".")
+    
+  })
 #Output Map 
 output$mapPlot <- renderPlot({
 
@@ -128,9 +147,15 @@ output$scatterPlot_pCO2_temp <- renderPlotly({
     showticklabels = TRUE)
   
   
-  p1<-plot_ly(df.sub.pCO2, x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_mean, name = "mean pCO2") %>% 
-    add_ribbons( ymin= df.sub.pCO2$pCO2_min, ymax= df.sub.pCO2$pCO2_max, name= "Min and Max", color= I("blue"), alpha = 0.5) %>% 
-    add_lines(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_mean, color= I("black"), connectgaps = FALSE) %>% 
+  
+  p1<-plot_ly(df.sub.pCO2, name = "pCO2") %>% 
+    
+    #add_ribbons(x= df.sub.pCO2$date_mean, ymin= df.sub.pCO2$pCO2_min, ymax= df.sub.pCO2$pCO2_max, name= "Min & Max", alpha = 0.2) %>% 
+    add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_mean,type= 'scatter', mode= 'markers',hoverinfo = 'text',
+              text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                            '</br> Mean: ',  round(df.sub.pCO2$pCO2_mean, digits= 2) ,
+                            '</br> Max: ', round(df.sub.pCO2$pCO2_max, digits = 2),
+                            '</br> Min: ', round(df.sub.pCO2$pCO2_min, digits = 2))) %>% 
     layout(xaxis= a, yaxis = b)
   
   ###subplot Temperature
@@ -163,12 +188,18 @@ output$scatterPlot_pCO2_temp <- renderPlotly({
     title = "Temperature [°C]",
     showticklabels = TRUE)
 
-  p2<-plot_ly(df.sub.temp, name = "mean temperature", type = 'scatter', mode = 'lines') %>% 
-    add_ribbons(x= df.sub.temp$date_mean, ymin= df.sub.temp$Tem_min, ymax= df.sub.temp$Tem_max, name= "Min and Max", color= I("blue"), alpha = 0.5, na.rm = TRUE) %>% 
-    add_lines(x= df.sub.temp$date_mean, y= df.sub.temp$Tem_mean, color= I("black"), connectgaps = FALSE)  %>% 
+  
+  p2<-plot_ly(df.sub.temp, name = "Temperature") %>% 
+    
+    #add_ribbons(x= df.sub.pCO2$date_mean, ymin= df.sub.temp$Tem_min, ymax= df.sub.temp$Tem_max, name= "Min & Max", alpha = 0.2) %>%
+    add_trace(x= df.sub.temp$date_mean, y= df.sub.temp$Tem_mean,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+              text = ~paste('</br> Date', df.sub.temp$date_mean,
+                            '</br> Mean: ',  round(df.sub.temp$Tem_mean, digits= 2) ,
+                            '</br> Max: ', round(df.sub.temp$Tem_max, digits = 2),
+                            '</br> Min: ', round(df.sub.temp$Tem_min, digits = 2))) %>% 
     layout(xaxis= a, yaxis = b)
-   
 
+  
   ###produce plot
   p<-subplot(p1,p2, nrows= 2, shareX = TRUE, titleY = TRUE) %>% 
     hide_legend()
