@@ -67,11 +67,12 @@ ui <- fluidPage(
          numericInput("lon_high", "High Longitude Limit[decimal degrees]:",min= 10, max = 30, value = 21),
          numericInput("lat_low", label = "Lower Lattitude Limit[decimal degrees]",min= 53, max = 60, value = 57.5),
          numericInput("lat_high", "High Lattitude Limit[decimal degrees]:",min= 53, max= 60, value=59),
-         submitButton("Apply Change")
+         submitButton("Apply Change"),
+         img(src="finnmaid.png", width = "100%")
          ),
       # Show plots of the data
       mainPanel(
-        plotOutput("mapPlot"), 
+        plotOutput("mapPlot", width= "100%"), 
         plotlyOutput("scatterPlot_pCO2_temp" ),
         textOutput("ValuesPerPoint")
         
