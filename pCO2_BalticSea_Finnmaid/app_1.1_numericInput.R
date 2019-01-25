@@ -47,13 +47,18 @@ routeS<-df %>%
   filter(ID == "20150728")
 # 03: define UI --------------------------------------------------------------
 ui <- fluidPage(
+
+  fluidRow(
+      column(9,
+      # Application title
+      titlePanel(title=div(img(src="title.png"), " ")),
+             offset = 3),
+    
+    fluidRow( 
+      column(3, 
    
-   # Application title
-  #titlePanel(title = "Surface water pCO2 of the Central Baltic Sea"),
-  titlePanel(title=div(img(src="title.png"), " ")),
    # Sidebar with a slider input for date, lattitude and longitude
-   sidebarLayout(
-     sidebarPanel(
+  
           dateRangeInput(
           inputId="daterange",
           label="Select a date range",
@@ -68,23 +73,60 @@ ui <- fluidPage(
          numericInput("lat_low", label = "Lower Lattitude Limit[decimal degrees]",min= 53, max = 60, value = 57.5),
          numericInput("lat_high", "High Lattitude Limit[decimal degrees]:",min= 53, max= 60, value=59),
          submitButton("Apply Change"),
+   
+   fluidRow(
+   column(3,
+     checkboxInput('pCO2_mean', 'pCO2 Mean'),
+   checkboxInput('temp_mean', 'Temp Mean'),
+   checkboxInput('sal_mean', 'Sal Mean'),
+   checkboxInput('ch4_mean', ' CH4 Mean'),
+   checkboxInput('o2_mean', 'O2 Mean')
+   ),
+   column(3,
+          checkboxInput('pCO2_min', 'pCO2 Min'),
+          checkboxInput('temp_min', 'Temp Min'),
+          checkboxInput('sal_min', 'Sal Min'),
+          checkboxInput('ch4_min', ' CH4 Min'),
+          checkboxInput('o2_min', 'O2 Min')
+   ),
+   column(3,
+          checkboxInput('pCO2_max', 'pCO2 Max'),
+          checkboxInput('temp_max', 'Temp Max'),
+          checkboxInput('sal_max', 'Sal Max'),
+          checkboxInput('ch4_max', ' CH4 Max'),
+          checkboxInput('o2_max', 'O2 Max')
+   ),
+   column(3,
+          checkboxInput('pCO2_sd', 'pCO2 SD'),
+          checkboxInput('temp_sd', 'Temp SD'),
+          checkboxInput('sal_sd', 'Sal SD'),
+          checkboxInput('ch4_sd', ' CH4 SD'),
+          checkboxInput('o2_sd', 'O2 SD')
+   )
+   ),
+   
+   
+   
          img(src="finnmaid.png", width = "100%"),
          selectInput("dataset", "Choose a dataset:",
-                    choices = c("pCO2", "Temperature", "Salinity")),
-         downloadButton("downloadData", "Download")
-         ),
+                    choices = c("pCO2", "Temperature", "Salinity", "CH4", "O2")),
+         downloadButton("downloadData", "Download"),
+          offset = 1),
       # Show plots of the data
-      mainPanel(
-        plotOutput("mapPlot", width= "100%"), 
+
+      column(8, 
+        plotOutput("mapPlot"), 
         plotlyOutput("scatterPlot_pCO2_temp" ),
         textOutput("ValuesPerPoint")
-        
+        )
       )
-   )
-)
+    )
+  )
+    
 # 04: Server function ---------------------------------------------------------
 # Define server logic required to draw mapPlot and scatterPlot for mainpanel
 server <- function(input, output) {
+  
   
   output$ValuesPerPoint <- renderText({
     
@@ -205,8 +247,16 @@ output$scatterPlot_pCO2_temp <- renderPlotly({
 
   
   ###produce plot
-  p<-subplot(p1,p2, nrows= 2, shareX = TRUE, titleY = TRUE) %>% 
-    hide_legend()
+  if (input$pCO2_mean == TRUE)
+  { p1 }
+  else {NULL}
+  
+  if (input$temp_mean == TRUE)
+  { p2 }
+  else {NULL}
+  
+  #p<-subplot(p1,p2, nrows= 2, shareX = TRUE, titleY = TRUE) %>% 
+   # hide_legend()
        })
 #download csv
 
@@ -215,7 +265,9 @@ datasetInput <<- reactive({
   switch(input$dataset,
          "pCO2" = df.sub.pCO2,
          "Temperature" = df.sub.temp #,
-         #"Salinity" = df.sub.sal
+         #"Salinity" = df.sub.sal,
+         # "CH4" = df.sub.ch4,
+         #"O2" = df.sub.o2
          )
 })
 
