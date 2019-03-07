@@ -19,7 +19,7 @@ library(plotly)
 
 df <<- data.table(read.csv("../Finnmaid_all_2003-2018.csv"))
 df$date<<-as.Date(df$date)
-
+df$route<<-as.character(df$route)
 # 02: map attributes  -----------------------------------------------------------
 baltic.coastlines <- ggplot2::map_data('world')#, xlim = c(4, 29), ylim = c(50, 66))
 land.colour   <- "grey75"
