@@ -4,11 +4,44 @@ server <- function(input, output) {
   
   # 04a: Output Values per point ------------------------------------------------  
   output$ValuesPerPoint <- renderText({
-    Sub <<- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,pCO2,Tem,ID)
+    if(input$routeall == TRUE)
+      Sub <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub <<-rbind(Sub,df %>% 
+                     filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                              Lon >= input$lon_low & Lon <= input$lon_high &
+                              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                     dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub <<-rbind(Sub,df %>% 
+                     filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                              Lon >= input$lon_low & Lon <= input$lon_high &
+                              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                     dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub <<-rbind(Sub,df %>% 
+                     filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                              Lon >= input$lon_low & Lon <= input$lon_high &
+                              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                     dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub <<-rbind(Sub,df %>% 
+                     filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                              Lon >= input$lon_low & Lon <= input$lon_high &
+                              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                     dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
+    
+    
     
     df.sub.mean <<- Sub %>% 
       group_by(ID) %>% 
@@ -19,16 +52,6 @@ server <- function(input, output) {
           The mean number of values per datapoint for your selection is", round((nrow(Sub)/nrow(df.sub.mean))), ".")
   })
   # 04b: Output Map Plot ------------------------------------------------ 
-  # routeInput <<- reactive({
-  #   switch(input$route,
-  #          "all" = routeall,
-  #          "E" = routeE,
-  #          "S"= routeS,
-  #          "W"= routeW,
-  #          "P" = routeP,
-  #          "G" = routeG
-  #   )
-  # })
   
   output$mapPlot <- renderPlot({
     if (input$routeall == TRUE)
@@ -64,7 +87,7 @@ server <- function(input, output) {
          )+
          labs(x="Longitude (°E)", y="Latitude (°N)", size = 2)+
          theme_minimal()+
-         geom_path(data= routeE,aes(x= routeE$Lon, y= routeE$Lat, fill = darkblue))) else  {NULL}
+         geom_path(data= routeE,aes(x= routeE$Lon, y= routeE$Lat, colour = "darkblue" ))) else  {NULL}
     
     if (input$routeW == TRUE)
       (p<-p +
@@ -110,11 +133,42 @@ server <- function(input, output) {
   # 04b2: Checkbox Plots -----------------------------------------------
   # Plot Mean pCO2
   output$plot_pCO2_mean <- renderPlotly({
-    Sub_pCO2 <- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,pCO2,Tem,ID)
+    if(input$routeall == TRUE)
+      Sub_pCO2 <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_pCO2 <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
     
     df.sub.mean.pCO2 <- Sub_pCO2 %>% 
       group_by(ID) %>% 
@@ -143,11 +197,42 @@ server <- function(input, output) {
   # Plot Mean Temperature
   output$plot_temp_mean<-renderPlotly({
     
-    Sub_temp <- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,pCO2,Tem,ID)
+    if(input$routeall == TRUE)
+      Sub_temp <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_temp <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_temp <<-rbind(Sub_temp,df %>% 
+                          filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_temp <<-rbind(Sub_temp,df %>% 
+                          filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_temp <<-rbind(Sub_temp,df %>% 
+                          filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_temp <<-rbind(Sub_temp,df %>% 
+                          filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
     
     df.sub.mean.temp <- Sub_temp %>% 
       group_by(ID) %>% 
@@ -177,11 +262,42 @@ server <- function(input, output) {
   })
   # # Plot Mean Salinity
   output$plot_sal_mean<-renderPlotly({
-    Sub_sal <- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,Sal,ID)
+    if(input$routeall == TRUE)
+      Sub_sal <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,Sal,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_sal <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,Sal,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_sal <<-rbind(Sub_sal,df %>% 
+                         filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_sal <<-rbind(Sub_sal,df %>% 
+                         filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_sal <<-rbind(Sub_sal,df %>% 
+                         filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_sal <<-rbind(Sub_sal,df %>% 
+                         filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL}
     
     df.sub.mean.sal <- Sub_sal %>% 
       group_by(ID) %>% 
@@ -210,11 +326,42 @@ server <- function(input, output) {
   })
   # # Plot Mean CH4
   output$plot_ch4_mean <-renderPlotly({
-    Sub_ch4 <- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,CH4,ID)
+    if(input$routeall == TRUE)
+      Sub_ch4 <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,CH4,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_ch4 <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,CH4,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
+                         filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
+                         filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
+                         filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
+                         filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL}
     
     df.sub.mean.ch4 <- Sub_ch4 %>% 
       group_by(ID) %>% 
@@ -224,7 +371,7 @@ server <- function(input, output) {
     df.sub.min.max.ch4 <- Sub_ch4 %>% 
       group_by(ID) %>% 
       summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
-      dplyr::select(Sal_min, Sal_max)
+      dplyr::select(ch4_min, ch4_max)
     
     df.sub.ch4<<-bind_cols(df.sub.mean.ch4,df.sub.min.max.ch4)
     df.sub.ch4$date_mean<<-as.Date(df.sub.ch4$date_mean) 
@@ -243,11 +390,42 @@ server <- function(input, output) {
   #Plot Mean O2
   output$plot_o2_mean<-renderPlotly({
     
-    Sub_o2 <- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,cO2,ID)
+    if(input$routeall == TRUE)
+      Sub_o2 <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,cO2,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_o2 <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,cO2,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_o2 <<-rbind(Sub_o2,df %>% 
+                        filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                 Lon >= input$lon_low & Lon <= input$lon_high &
+                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_o2 <<-rbind(Sub_o2,df %>% 
+                        filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                 Lon >= input$lon_low & Lon <= input$lon_high &
+                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_o2 <<-rbind(Sub_o2,df %>% 
+                        filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                 Lon >= input$lon_low & Lon <= input$lon_high &
+                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_o2 <<-rbind(Sub_o2,df %>% 
+                        filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                 Lon >= input$lon_low & Lon <= input$lon_high &
+                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL}
     
     df.sub.mean.o2 <- Sub_o2 %>% 
       group_by(ID) %>% 
@@ -259,7 +437,7 @@ server <- function(input, output) {
       summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
       dplyr::select(cO2_min, cO2_max)
     
-    df.sub.co2<<-bind_cols(df.sub.mean.o2,df.sub.min.max.o2)
+    df.sub.o2<<-bind_cols(df.sub.mean.o2,df.sub.min.max.o2)
     
     p5<- plot_ly(df.sub.mean.o2, name = "Mean O2") %>%
       add_trace(x= df.sub.o2$date_mean, y= df.sub.o2$cO2_mean,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
@@ -275,11 +453,42 @@ server <- function(input, output) {
   })
   # Plot Min  pCO2
   output$plot_pCO2_min<-renderPlotly({
-    Sub_pCO2 <- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,pCO2,Tem,ID)
+    if(input$routeall == TRUE)
+      Sub_pCO2 <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_pCO2 <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
     
     df.sub.mean.pCO2 <- Sub_pCO2 %>% 
       group_by(ID) %>% 
@@ -308,11 +517,42 @@ server <- function(input, output) {
   # Plot Min  Tempreature
   output$plot_temp_min<-renderPlotly({
     
-    Sub_temp <- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,pCO2,Tem,ID)
+    if(input$routeall == TRUE)
+      Sub_temp <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_temp <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_temp <<-rbind(Sub_temp,df %>% 
+                          filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_temp <<-rbind(Sub_temp,df %>% 
+                          filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_temp <<-rbind(Sub_temp,df %>% 
+                          filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_temp <<-rbind(Sub_temp,df %>% 
+                          filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
     
     df.sub.mean.temp <- Sub_temp %>% 
       group_by(ID) %>% 
@@ -341,11 +581,42 @@ server <- function(input, output) {
   })
   # # Plot Min Salinity
   output$plot_sal_min <-renderPlotly({
-    Sub_sal <- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,Sal,ID)
+    if(input$routeall == TRUE)
+      Sub_sal <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,Sal,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_sal <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,Sal,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_sal <<-rbind(Sub_sal,df %>% 
+                         filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_sal <<-rbind(Sub_sal,df %>% 
+                         filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_sal <<-rbind(Sub_sal,df %>% 
+                         filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_sal <<-rbind(Sub_sal,df %>% 
+                         filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL}
     
     df.sub.mean.sal <- Sub_sal %>% 
       group_by(ID) %>% 
@@ -361,11 +632,11 @@ server <- function(input, output) {
     df.sub.sal$date_mean<<-as.Date(df.sub.sal$date_mean)
     
     p8<- plot_ly(df.sub.mean.sal, name = "Min Salinity") %>% 
-      add_trace(x= df.sub.sal$date_mean, y= df.sub.sal$sal_min,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+      add_trace(x= df.sub.sal$date_mean, y= df.sub.sal$Sal_min,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
                 text = ~paste('</br> Date', df.sub.sal$date_mean,
-                              '</br> Mean: ',  round(df.sub.sal$sal_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.sal$sal_max, digits = 2),
-                              '</br> Min: ', round(df.sub.sal$sal_min, digits = 2))) %>% 
+                              '</br> Mean: ',  round(df.sub.sal$Sal_mean, digits= 2) ,
+                              '</br> Max: ', round(df.sub.sal$Sal_max, digits = 2),
+                              '</br> Min: ', round(df.sub.sal$Sal_min, digits = 2))) %>% 
       layout(xaxis= a, yaxis = d, title = "Minimum Salinity")
     
     if (input$sal_min == TRUE)
@@ -374,11 +645,42 @@ server <- function(input, output) {
   })
   # Plot Min CH4
   output$plot_ch4_min <-renderPlotly ({
-    Sub_ch4 <- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,CH4,ID)
+    if(input$routeall == TRUE)
+      Sub_ch4 <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,CH4,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_ch4 <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,CH4,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
+                         filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
+                         filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
+                         filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
+                         filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL}
     
     df.sub.mean.ch4 <- Sub_ch4 %>% 
       group_by(ID) %>% 
@@ -405,12 +707,43 @@ server <- function(input, output) {
       {NULL}
   })
   # Plot Min O2
-  output$plot_o2_min<-renderPlotly({
-    Sub_o2 <- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,cO2,ID)
+  output$plot_o2_min <-renderPlotly ({
+    if(input$routeall == TRUE)
+      Sub_o2 <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,cO2,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_o2 <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,cO2,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_o2 <<-rbind(Sub_o2,df %>% 
+                        filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                 Lon >= input$lon_low & Lon <= input$lon_high &
+                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_o2 <<-rbind(Sub_o2,df %>% 
+                        filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                 Lon >= input$lon_low & Lon <= input$lon_high &
+                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_o2 <<-rbind(Sub_o2,df %>% 
+                        filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                 Lon >= input$lon_low & Lon <= input$lon_high &
+                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_o2 <<-rbind(Sub_o2,df %>% 
+                        filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                 Lon >= input$lon_low & Lon <= input$lon_high &
+                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL}
     
     df.sub.mean.o2 <- Sub_o2 %>% 
       group_by(ID) %>% 
@@ -425,11 +758,11 @@ server <- function(input, output) {
     df.sub.o2<<-bind_cols(df.sub.mean.o2,df.sub.min.max.o2)
     
     p10<- plot_ly(df.sub.mean.o2, name = "Min O2") %>% 
-      add_trace(x= df.sub.o2$date_mean, y= df.sub.o2$o2_min,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+      add_trace(x= df.sub.o2$date_mean, y= df.sub.o2$cO2_min,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
                 text = ~paste('</br> Date', df.sub.o2$date_mean,
-                              '</br> Mean: ',  round(df.sub.o2$o2_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.o2$o2_max, digits = 2),
-                              '</br> Min: ', round(df.sub.o2$o2_min, digits = 2))) %>% 
+                              '</br> Mean: ',  round(df.sub.o2$cO2_mean, digits= 2) ,
+                              '</br> Max: ', round(df.sub.o2$cO2_max, digits = 2),
+                              '</br> Min: ', round(df.sub.o2$cO2_min, digits = 2))) %>% 
       layout(xaxis= a, yaxis = f, title = "Minimum O2")
     if (input$o2_min == TRUE)
       (p10) else
@@ -437,11 +770,42 @@ server <- function(input, output) {
   })
   # # Plot Max  pCO2
   output$plot_pCO2_max <- renderPlotly({
-    Sub_pCO2 <- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,pCO2,Tem,ID)
+    if(input$routeall == TRUE)
+      Sub_pCO2 <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_pCO2 <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
     
     df.sub.mean.pCO2 <- Sub_pCO2 %>% 
       group_by(ID) %>% 
@@ -454,11 +818,12 @@ server <- function(input, output) {
       dplyr::select(pCO2_min, pCO2_max)
     
     df.sub.pCO2<<-bind_cols(df.sub.mean.pCO2,df.sub.min.max.pCO2)
+    
     p11<- plot_ly(df.sub.pCO2, name = "Max pCO2") %>% 
       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
                               '</br> Mean: ',  round(df.sub.pCO2$pCO2_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.pCO2$o2_max, digits = 2),
+                              '</br> Max: ', round(df.sub.pCO2$pCO2_max, digits = 2),
                               '</br> Min: ', round(df.sub.pCO2$pCO2_min, digits = 2))) %>% 
       layout(xaxis= a, yaxis = b, title = "Maximum pCO2")
     if (input$pCO2_max == TRUE)
@@ -467,11 +832,42 @@ server <- function(input, output) {
   })
   # # Plot Max  Tempreature
   output$plot_temp_max<-renderPlotly({
-    Sub_temp <- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,pCO2,Tem,ID)
+    if(input$routeall == TRUE)
+      Sub_temp <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_temp <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_temp <<-rbind(Sub_temp,df %>% 
+                          filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_temp <<-rbind(Sub_temp,df %>% 
+                          filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_temp <<-rbind(Sub_temp,df %>% 
+                          filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_temp <<-rbind(Sub_temp,df %>% 
+                          filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
     
     df.sub.mean.temp <- Sub_temp %>% 
       group_by(ID) %>% 
@@ -499,11 +895,42 @@ server <- function(input, output) {
   })
   # # Plot Max Salinity
   output$plot_sal_max<-renderPlotly({
-    Sub_sal <- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,Sal,ID)
+    if(input$routeall == TRUE)
+      Sub_sal <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,Sal,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_sal <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,Sal,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_sal <<-rbind(Sub_sal,df %>% 
+                         filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_sal <<-rbind(Sub_sal,df %>% 
+                         filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_sal <<-rbind(Sub_sal,df %>% 
+                         filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_sal <<-rbind(Sub_sal,df %>% 
+                         filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL}
     
     df.sub.mean.sal <- Sub_sal %>% 
       group_by(ID) %>% 
@@ -519,11 +946,11 @@ server <- function(input, output) {
     df.sub.sal$date_mean<<-as.Date(df.sub.sal$date_mean)
     
     p13<- plot_ly(df.sub.mean.sal, name = "Max Salinity") %>% 
-      add_trace(x= df.sub.sal$date_mean, y= df.sub.sal$sal_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+      add_trace(x= df.sub.sal$date_mean, y= df.sub.sal$Sal_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
                 text = ~paste('</br> Date', df.sub.sal$date_mean,
-                              '</br> Mean: ',  round(df.sub.sal$sal_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.sal$sal_max, digits = 2),
-                              '</br> Min: ', round(df.sub.sal$sal_min, digits = 2))) %>% 
+                              '</br> Mean: ',  round(df.sub.sal$Sal_mean, digits= 2) ,
+                              '</br> Max: ', round(df.sub.sal$Sal_max, digits = 2),
+                              '</br> Min: ', round(df.sub.sal$Sal_min, digits = 2))) %>% 
       layout(xaxis= a, yaxis = d, title = "Maximum")
     if (input$sal_max == TRUE)
       (p13) else
@@ -531,11 +958,42 @@ server <- function(input, output) {
   })
   # # Plot Max CH4
   output$plot_ch4_max <-renderPlotly({
-    Sub_ch4 <- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,CH4,ID)
+    if(input$routeall == TRUE)
+      Sub_ch4 <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,CH4,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_ch4 <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,CH4,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
+                         filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
+                         filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
+                         filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
+                         filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL}
     
     df.sub.mean.ch4 <- Sub_ch4 %>% 
       group_by(ID) %>% 
@@ -545,7 +1003,7 @@ server <- function(input, output) {
     df.sub.min.max.ch4 <- Sub_ch4 %>% 
       group_by(ID) %>% 
       summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
-      dplyr::select(Sal_min, Sal_max)
+      dplyr::select(ch4_min, ch4_max)
     
     df.sub.ch4<<-bind_cols(df.sub.mean.ch4,df.sub.min.max.ch4)
     df.sub.ch4$date_mean<<-as.Date(df.sub.ch4$date_mean) 
@@ -563,11 +1021,42 @@ server <- function(input, output) {
   })
   # # Plot Max O2
   output$plot_o2_max<-renderPlotly({
-    Sub_o2 <- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,cO2,ID)
+    if(input$routeall == TRUE)
+      Sub_o2 <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,cO2,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_o2 <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,cO2,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_o2 <<-rbind(Sub_o2,df %>% 
+                        filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                 Lon >= input$lon_low & Lon <= input$lon_high &
+                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_o2 <<-rbind(Sub_o2,df %>% 
+                        filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                 Lon >= input$lon_low & Lon <= input$lon_high &
+                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_o2 <<-rbind(Sub_o2,df %>% 
+                        filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                 Lon >= input$lon_low & Lon <= input$lon_high &
+                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_o2 <<-rbind(Sub_o2,df %>% 
+                        filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                 Lon >= input$lon_low & Lon <= input$lon_high &
+                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL}
     
     df.sub.mean.o2 <- Sub_o2 %>% 
       group_by(ID) %>% 
@@ -581,11 +1070,11 @@ server <- function(input, output) {
     
     df.sub.o2<<-bind_cols(df.sub.mean.o2,df.sub.min.max.o2)
     p15<- plot_ly(df.sub.mean.o2, name = "Max O2") %>% 
-      add_trace(x= df.sub.o2$date_mean, y= df.sub.o2$o2_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+      add_trace(x= df.sub.o2$date_mean, y= df.sub.o2$cO2_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
                 text = ~paste('</br> Date', df.sub.o2$date_mean,
-                              '</br> Mean: ',  round(df.sub.o2$o2_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.o2$o2_max, digits = 2),
-                              '</br> Min: ', round(df.sub.o2$o2_min, digits = 2))) %>% 
+                              '</br> Mean: ',  round(df.sub.o2$cO2_mean, digits= 2) ,
+                              '</br> Max: ', round(df.sub.o2$cO2_max, digits = 2),
+                              '</br> Min: ', round(df.sub.o2$cO2_min, digits = 2))) %>% 
       layout(xaxis= a, yaxis = f, title = "Maximum cO2")
     if (input$o2_max == TRUE)
       (p15) else
@@ -593,11 +1082,42 @@ server <- function(input, output) {
   })
   # Plot STD  pCO2
   output$plot_pCO2_sd<-renderPlotly({
-    Sub_pCO2 <- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,pCO2,Tem,ID)
+    if(input$routeall == TRUE)
+      Sub_pCO2 <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_pCO2 <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
     
     df.sub.mean.pCO2 <- Sub_pCO2 %>% 
       group_by(ID) %>% 
@@ -616,7 +1136,7 @@ server <- function(input, output) {
     
     df.sub.pCO2<<-bind_cols(df.sub.mean.pCO2,df.sub.min.max.pCO2, df.sub.sd.pCO2)
     p16<- plot_ly(df.sub.pCO2, name = "SD pCO2") %>%
-      add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_sd,type= 'scatter', mode= 'line',  hoverinfo = 'text',
+      add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_sd,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
                               '</br> Mean: ',  round(df.sub.pCO2$pCO2_mean, digits= 2) ,
                               '</br> Max: ', round(df.sub.pCO2$pCO2_max, digits = 2),
@@ -628,11 +1148,42 @@ server <- function(input, output) {
   })
   # # Plot STD  Tempreature
   output$plot_temp_sd<-renderPlotly({
-    Sub_temp <- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,pCO2,Tem,ID)
+    if(input$routeall == TRUE)
+      Sub_temp <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_temp <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_temp <<-rbind(Sub_temp,df %>% 
+                          filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_temp <<-rbind(Sub_temp,df %>% 
+                          filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_temp <<-rbind(Sub_temp,df %>% 
+                          filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_temp <<-rbind(Sub_temp,df %>% 
+                          filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
     
     df.sub.mean.temp <- Sub_temp %>% 
       group_by(ID) %>% 
@@ -665,11 +1216,42 @@ server <- function(input, output) {
   })
   # # Plot STD Salinity
   output$plot_sal_sd <-renderPlotly({
-    Sub_sal <- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,Sal,ID)
+    if(input$routeall == TRUE)
+      Sub_sal <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,Sal,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_sal <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,Sal,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_sal <<-rbind(Sub_sal,df %>% 
+                         filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_sal <<-rbind(Sub_sal,df %>% 
+                         filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_sal <<-rbind(Sub_sal,df %>% 
+                         filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_sal <<-rbind(Sub_sal,df %>% 
+                         filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL}
     
     df.sub.mean.sal <- Sub_sal %>% 
       group_by(ID) %>% 
@@ -689,23 +1271,54 @@ server <- function(input, output) {
     df.sub.sal<<-bind_cols(df.sub.mean.sal,df.sub.min.max.sal, df.sub.sd.sal)
     df.sub.sal$date_mean<<-as.Date(df.sub.sal$date_mean)
     p18<- plot_ly(df.sub.mean.sal, name = "SD Salinity") %>% 
-      add_trace(x= df.sub.sal$date_mean, y= df.sub.sal$sal_sd,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+      add_trace(x= df.sub.sal$date_mean, y= df.sub.sal$Sal_sd,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
                 text = ~paste('</br> Date', df.sub.sal$date_mean,
-                              '</br> Mean: ',  round(df.sub.sal$sal_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.sal$sal_max, digits = 2),
-                              '</br> Min: ', round(df.sub.sal$sal_min, digits = 2))) %>% 
-      #   layout(xaxis= a, yaxis = d, title = "Standard Deviation Salinity")
-      if (input$sal_sd == TRUE)
-        (p18) else
-        {NULL}
+                              '</br> Mean: ',  round(df.sub.sal$Sal_mean, digits= 2) ,
+                              '</br> Max: ', round(df.sub.sal$Sal_max, digits = 2),
+                              '</br> Min: ', round(df.sub.sal$Sal_min, digits = 2))) %>% 
+      layout(xaxis= a, yaxis = d, title = "Standard Deviation Salinity")
+    if (input$sal_sd == TRUE)
+      (p18) else
+      {NULL}
   })
   # # Plot STD CH4
   output$plot_ch4_sd <-renderPlotly({
-    Sub_ch4 <- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,CH4,ID)
+    if(input$routeall == TRUE)
+      Sub_ch4 <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,CH4,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_ch4 <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,CH4,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
+                         filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
+                         filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
+                         filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
+                         filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                  Lon >= input$lon_low & Lon <= input$lon_high &
+                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL}
     
     df.sub.mean.ch4 <- Sub_ch4 %>% 
       group_by(ID) %>% 
@@ -738,11 +1351,72 @@ server <- function(input, output) {
   })
   # # Plot STD O2
   output$plot_o2_sd<-renderPlotly({
-    Sub_o2 <- df %>% 
-      filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,Lat,cO2,ID)
+    if(input$routeall == TRUE)
+      Sub_o2 <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,cO2,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_o2 <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,cO2,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_o2 <<-rbind(Sub_o2,df %>% 
+                        filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                 Lon >= input$lon_low & Lon <= input$lon_high &
+                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_o2 <<-rbind(Sub_o2,df %>% 
+                        filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                 Lon >= input$lon_low & Lon <= input$lon_high &
+                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_o2 <<-rbind(Sub_o2,df %>% 
+                        filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                 Lon >= input$lon_low & Lon <= input$lon_high &
+                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_o2 <<-rbind(Sub_o2,df %>% 
+                        filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                 Lon >= input$lon_low & Lon <= input$lon_high &
+                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL}
+    if (input$routeE == TRUE)
+      Sub_o2 <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,cO2,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_o2 <<-rbind(Sub_o2,df %>% 
+                        filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                 Lon >= input$lon_low & Lon <= input$lon_high &
+                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_o2 <<-rbind(Sub_o2,df %>% 
+                        filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                 Lon >= input$lon_low & Lon <= input$lon_high &
+                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_o2 <<-rbind(Sub_o2,df %>% 
+                        filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                 Lon >= input$lon_low & Lon <= input$lon_high &
+                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_o2 <<-rbind(Sub_o2,df %>% 
+                        filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                 Lon >= input$lon_low & Lon <= input$lon_high &
+                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL}
     
     df.sub.mean.o2 <- Sub_o2 %>% 
       group_by(ID) %>% 
@@ -757,13 +1431,13 @@ server <- function(input, output) {
     df.sub.sd.o2<- Sub_o2 %>% 
       group_by(ID) %>% 
       summarise_all(funs(sd, "sd"), na.rm = FALSE) %>% 
-      dplyr::select(o2_sd)
+      dplyr::select(cO2_sd)
     p20<- plot_ly(df.sub.mean.o2, name = "SD O2") %>% 
-      add_trace(x= df.sub.o2$date_mean, y= df.sub.o2$o2_std,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+      add_trace(x= df.sub.o2$date_mean, y= df.sub.o2$cO2_sd,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
                 text = ~paste('</br> Date', df.sub.o2$date_mean,
-                              '</br> Mean: ',  round(df.sub.o2$o2_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.o2$o2_max, digits = 2),
-                              '</br> Min: ', round(df.sub.o2$o2_min, digits = 2))) %>% 
+                              '</br> Mean: ',  round(df.sub.o2$cO2_mean, digits= 2) ,
+                              '</br> Max: ', round(df.sub.o2$cO2_max, digits = 2),
+                              '</br> Min: ', round(df.sub.o2$cO2_min, digits = 2))) %>% 
       layout(xaxis= a, yaxis = f, title = "Standard Deviation cO2")
     if (input$o2_sd == TRUE)
       (p20) else
@@ -776,8 +1450,9 @@ server <- function(input, output) {
            "pCO2" = df.sub.pCO2,
            "Temperature" = df.sub.temp #,
            #"Salinity" = df.sub.sal,
-           # "CH4" = df.sub.ch4,
-           #"O2" = df.sub.o2
+           # "CH4" = df.sub.ch4
+           ,
+           "O2" = df.sub.o2
     )
   })
   output$downloadData <- downloadHandler(
