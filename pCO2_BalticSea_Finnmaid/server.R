@@ -64,7 +64,7 @@ server <- function(input, output) {
          #)+
          geom_rect(data=data.frame(),mapping = aes(xmin= input$lon_low, xmax = input$lon_high, ymin=input$lat_low, ymax= input$lat_high), fill= "blue", alpha = 0.2
          )+
-         labs(x="Longitude (°E)", y="Latitude (°N)", size = 2)+
+         labs(x="Longitude (Â°E)", y="Latitude (Â°N)", size = 2)+
          theme_minimal()+
          geom_path(data= routeE,aes(x= routeE$Lon, y= routeE$Lat, color ="E"))+
          geom_path(data= routeW,aes(x= routeW$Lon, y= routeW$Lat, color = "W")) +
@@ -110,24 +110,24 @@ server <- function(input, output) {
       {NULL}
   })
   # 04b: Output Checkbox Plots ------------------------------------------------
-  # 04b1: Datamanagment ------------------------------------------------
+  # 04b1: Axis Labels ------------------------------------------------
   ## information for axis titles
-  a <<- list(
+  a <- list(
     title = "Date",
     showticklabels = TRUE)
-  b<<- list (
+  b<- list (
     title = "pCO2[µatm]",
     showticklabels = TRUE)
-  g<<- list(
+  g<- list(
     title = "Temperature [°C]",
     showticklabels = TRUE)
-  d<<- list(
+  d<- list(
     title = "Salinity",
     showticklabels = TRUE)
-  e<<-list(
+  e<-list(
     title = "CH4",
     showticklabels = TRUE)
-  f<<- list(
+  f<- list(
     title= "O2",
     showticklabels = TRUE)
   # 04b2: Checkbox Plots -----------------------------------------------
@@ -1432,6 +1432,9 @@ server <- function(input, output) {
       group_by(ID) %>% 
       summarise_all(funs(sd, "sd"), na.rm = FALSE) %>% 
       dplyr::select(cO2_sd)
+    df.sub.o2<<-bind_cols(df.sub.mean.o2,df.sub.min.max.o2, df.sub.sd.o2)
+    df.sub.o2$date_mean<<-as.Date(df.sub.o2$date_mean) 
+    
     p20<- plot_ly(df.sub.mean.o2, name = "SD O2") %>% 
       add_trace(x= df.sub.o2$date_mean, y= df.sub.o2$cO2_sd,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
                 text = ~paste('</br> Date', df.sub.o2$date_mean,
@@ -1443,7 +1446,125 @@ server <- function(input, output) {
       (p20) else
       {NULL}
   })
-  # 04c: download CSV ------------------------------------------------
+  # 04d: CheckboxPlots, Hovmöller ------------------------------------
+  #Hovmöller Plot pCO2 Mean
+  
+  output$hov_pCO2_mean <- renderPlot({
+    #df$date <- as.POSIXct(strptime(df$date, format="%Y-%m-%d %H:%M:%S", tz="GMT"))
+    
+    if(input$routeall == TRUE)
+      Sub_pCO2 <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_pCO2 <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
+    
+    
+    
+    #Sub_pCO2$date <- as.POSIXct(strptime(Sub_pCO2$date, format="%Y-%m-%d %H:%M:%S", tz="GMT"))
+    
+    #east in cut umschreiben, mean function so wie oben anwenden, nicht diese komische variante von Jens, die funltioniert nicht
+    cut_pCO2<-Sub_pCO2
+    #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= 55, to = 60, by=0.02), labels = seq(from= 55+0.02, to= 60, by=0.02))
+    cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= input$lat_low, to = input$lat_high, by=0.02), labels = seq(from= input$lat_low+0.02, to= input$lat_high, by=0.02))
+    cut_pCO2$week <- cut(cut_pCO2$date, breaks="weeks")
+    cut_pCO2$week <- as.Date(cut_pCO2$week, tz="GMT")
+    
+    cut_pCO2_mean<-cut_pCO2 %>% 
+      dplyr::select(Lat.int, week, pCO2) %>% 
+      group_by(Lat.int, week) %>% 
+      summarise_all(funs(mean, "mean", mean(.,na.rm = FALSE))) %>% 
+      as.data.frame() 
+    
+    cut_pCO2_mean$pCO2_mean<-cut_pCO2_mean$mean
+    
+    cut_pCO2_mean$week<-as.POSIXct(cut_pCO2_mean$week)
+    #cut_pCO2_mean$Lat.int<-as.character(cut_pCO2_mean$Lat.int)
+    
+    hov1 <-
+      ggplot(data= cut_pCO2_mean)+
+      geom_raster(aes(week, Lat.int, fill= pCO2_mean))+
+      scale_fill_gradientn(colours=c("#0000FFFF","#FFFFFFFF","#FF0000FF"))+
+      #until here working well and looking good
+      #xlim(as.POSIXct("2003/1/1"), as.POSIXct("2018/1/1"))+
+      #geom_vline(xintercept = as.numeric(seq(as.POSIXct("2003/1/1", tz="GMT"), 
+      #                                      as.POSIXct("2018/1/1", tz="GMT"), 
+      #                                      "years")),
+      #         size=1)+
+      #scale_fill_gradient(heat.colors)+
+      #(name=expression("pCO2[µatm]")+
+      #limits=c(100, 600))+
+      #scale_x_datetime(breaks = seq(as.POSIXct("2004/1/1", tz="GMT"), as.POSIXct("2016/1/1", tz="GMT"), "2 years"),
+      #                expand = c(0,0))+
+    #scale_y_continuous(breaks = seq(55, 60, 2))+
+    labs(y="Latitude (°N)")+
+      theme(
+        axis.title.x = element_blank(),
+        legend.position = "bottom",
+        legend.key.width = unit(1.3, "cm"),
+        legend.key.height = unit(0.3, "cm")
+      )
+    
+    
+    
+    if (input$pCO2_mean == TRUE)
+      (hov1) else
+      {NULL}
+    
+  })
+  #Hovmöller Plot Temperatur Mean
+  
+  
+  
+  #Hovmöller Plot Salinity Mean
+  
+  
+  
+  #Hovmöller Plot CH4 Mean
+  
+  
+  
+  #Hovmöller Plot O2
+  
+  
+  
+  
+  # 04e: Textoutput Hovmöller, restrictions
+  
+  output$restrictions <-renderText({
+    paste("For Hovmöller Plots only the options 'pCO2 mean', 'temp mean', 'Sal mean', 'CH4 mean' and ' O2 mean' are available.")
+  })
+  # 04e: download CSV ------------------------------------------------
   
   datasetInput <<- reactive({
     switch(input$dataset,

@@ -17,9 +17,9 @@ library(plotly)
 
 # 01: load data -- -------------------------------------------------------------
 
-df <<- data.table(read.csv("../Finnmaid_all_2003-2018.csv"))
-df$date<<-as.Date(df$date)
-
+df <- data.table(read.csv("../Finnmaid_all_2003-2018.csv"))
+df$date<-as.Date(df$date)
+df$route<-as.character(df$route)
 # 02: map attributes  -----------------------------------------------------------
 baltic.coastlines <- ggplot2::map_data('world')#, xlim = c(4, 29), ylim = c(50, 66))
 land.colour   <- "grey75"
@@ -69,8 +69,6 @@ ui <- fluidPage(
              checkboxInput("routeG", "route G"),
              checkboxInput("routeP", "route P"),
              checkboxInput("routeS", "route S"),
-             #selectInput("route", "Choose a route:",
-             #           choices = c("all","E", "W", "G", "P", "S")),
              numericInput("lon_low", label = "Lower Longitude Limit[decimal degrees]",min= 10, max = 30, value = 19.5),
              numericInput("lon_high", "High Longitude Limit[decimal degrees]:",min= 10, max = 30, value = 21),
              numericInput("lat_low", label = "Lower Lattitude Limit[decimal degrees]",min= 53, max = 60, value = 57.5),
@@ -114,27 +112,38 @@ ui <- fluidPage(
              offset = 1),
       # Show plots of the data
       column(8, 
-             plotOutput("mapPlot"), 
-             plotlyOutput("plot_pCO2_mean"),
-             plotlyOutput("plot_temp_mean"),
-             plotlyOutput("plot_sal_mean"),
-             #plotlyOutput("plot_ch4_mean"),
-             plotlyOutput("plot_o2_mean"),
-             plotlyOutput("plot_pCO2_min"),
-             plotlyOutput("plot_temp_min"),
-             plotlyOutput("plot_sal_min"),
-             # plotlyOutput("plot_ch4_min"),
-             plotlyOutput("plot_o2_min"),
-             plotlyOutput("plot_pCO2_max"),
-             plotlyOutput("plot_temp_max"),
-             plotlyOutput("plot_sal_max"),
-             # plotlyOutput("plot_ch4_max"),
-             plotlyOutput("plot_o2_max"),
-             plotlyOutput("plot_pCO2_sd"),
-             plotlyOutput("plot_temp_sd"),
-             plotlyOutput("plot_sal_sd"),
-             # plotlyOutput("plot_ch4_sd"),
-             plotlyOutput("plot_o2_sd"),
+             plotOutput("mapPlot"),  
+             
+             tabsetPanel(type = "tabs",
+                         tabPanel("Scatterplot",
+                                  plotlyOutput("plot_pCO2_mean"),
+                                  plotlyOutput("plot_temp_mean"),
+                                  plotlyOutput("plot_sal_mean"),
+                                  #plotlyOutput("plot_ch4_mean"),
+                                  plotlyOutput("plot_o2_mean"),
+                                  plotlyOutput("plot_pCO2_min"),
+                                  plotlyOutput("plot_temp_min"),
+                                  plotlyOutput("plot_sal_min"),
+                                  # plotlyOutput("plot_ch4_min"),
+                                  plotlyOutput("plot_o2_min"),
+                                  plotlyOutput("plot_pCO2_max"),
+                                  plotlyOutput("plot_temp_max"),
+                                  plotlyOutput("plot_sal_max"),
+                                  # plotlyOutput("plot_ch4_max"),
+                                  plotlyOutput("plot_o2_max"),
+                                  plotlyOutput("plot_pCO2_sd"),
+                                  plotlyOutput("plot_temp_sd"),
+                                  plotlyOutput("plot_sal_sd"),
+                                  # plotlyOutput("plot_ch4_sd"),
+                                  plotlyOutput("plot_o2_sd")
+                         ),
+                         tabPanel("Hovmöller", 
+                                  textOutput("restrictions"),
+                                  plotOutput("hov_pCO2_mean"),
+                                  plotOutput("hov_temp_mean"),
+                                  plotOutput("hov_sal_mean"),
+                                  #plotOutput("hov_ch4_mean"),
+                                  plotOutput("hov_o2_mean"))),
              textOutput("ValuesPerPoint")
       )
     )
