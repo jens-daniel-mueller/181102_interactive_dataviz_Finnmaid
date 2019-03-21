@@ -308,12 +308,12 @@ server <- function(input, output) {
     df.sub.mean.pCO2 <- Sub_pCO2 %>% 
       group_by(ID) %>% 
       summarise_all(funs(mean, "mean", mean(., na.rm = FALSE))) %>% 
-      dplyr::select(date_mean, pCO2_mean, Tem_mean,Sal_mean,cO2_mean)
+      dplyr::select(date_mean, pCO2_mean, Tem_mean,Sal_mean,cO2_mean) #add ch4_mean here as soon as data is there
     
     df.sub.min.max.pCO2 <- Sub_pCO2 %>% 
       group_by(ID) %>% 
       summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
-      dplyr::select(pCO2_min, pCO2_max, Tem_min, Tem_max, Sal_min, Sal_max, cO2_min, cO2_max)
+      dplyr::select(pCO2_min, pCO2_max, Tem_min, Tem_max, Sal_min, Sal_max, cO2_min, cO2_max)#add ch4_min/max here as soon as data is there
     
     df.sub.pCO2<<-bind_cols(df.sub.mean.pCO2,df.sub.min.max.pCO2)
     
@@ -329,7 +329,8 @@ server <- function(input, output) {
     if (input$pCO2_mean == TRUE)
       (plotlist<-list(p1)) else
       {plotlist<-plotlist}
-  
+ ### PLOT MEAN Temperature ###
+    
     p2<-plot_ly(df.sub.pCO2, name = "Mean Temperature", height = (400*(length(plotlist))),  width = 1200) %>% 
       
       add_trace(x= ~df.sub.pCO2$date_mean, y= ~df.sub.pCO2$Tem_mean,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
@@ -342,7 +343,8 @@ server <- function(input, output) {
     if (input$temp_mean == TRUE)
       (plotlist<-append(plotlist, list(p2))) else
       {plotlist<-plotlist}
- 
+    
+### PLOT MEAN SALINITY ### 
   p3<- plot_ly(df.sub.pCO2, name = "Mean Salinity",height = (400*(length(plotlist))), width = 1200) %>% 
       add_trace(x= ~ df.sub.pCO2$date_mean, y= ~ df.sub.pCO2$Sal_mean,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
@@ -354,19 +356,11 @@ server <- function(input, output) {
     if (input$sal_mean == TRUE)
       (plotlist<-append(plotlist, list(p3))) else
       {plotlist<-plotlist}
+  
  ### PLOT MEAN CH4 ###
   
-     p4<- plot_ly(df.sub.pCO2, name = "Mean CH4",height = (400*(length(plotlist))),  width = 1200) %>% 
-       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$ch4_mean,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
-                               '</br> Mean: ',  round(df.sub.pCO2$ch4_mean, digits= 2) ,
-                               '</br> Max: ', round(df.sub.pCO2$ch4_max, digits = 2),
-                               '</br> Min: ', round(df.sub.pCO2$ch4_min, digits = 2))) %>% 
-       layout(xaxis= a, yaxis = e,  autosize= FALSE)
+# add when data is available
      
-     if (input$ch4_mean == TRUE)
-       (plotlist<-append(plotlist, list(p4))) else
-          {plotlist<-plotlist}
  ### PLOT MEAN O2
      
      p5<- plot_ly(df.sub.pCO2, name = "Mean O2",height = (400*(length(plotlist))),  width = 1200) %>%
@@ -394,941 +388,174 @@ server <- function(input, output) {
        (plotlist<-append(plotlist, list(p6))) else
        {plotlist<-plotlist}
      
+  ### PLOT MIN TEMPERATURE ###   
+     p7<-plot_ly(df.sub.pCO2, name = "Min Temperature",height = (400*(length(plotlist))),  width = 1200) %>%
+       
+       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$Tem_min,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                               '</br> Mean: ',  round(df.sub.pCO2$Tem_mean, digits= 2) ,
+                               '</br> Max: ', round(df.sub.pCO2$Tem_max, digits = 2),
+                               '</br> Min: ', round(df.sub.pCO2$Tem_min, digits = 2))) %>%
+       layout(xaxis= a, yaxis = g, autosize = FALSE)
+     
+     if (input$temp_min == TRUE)
+       (plotlist<-append(plotlist, list(p7))) else
+       {plotlist<-plotlist}
+     
+ ### PLOT MIN SALINITY
+     
+     p8<- plot_ly(df.sub.pCO2, name = "Min Salinity",height = (400*(length(plotlist))),  width = 1200) %>% 
+       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$Sal_min,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                               '</br> Mean: ',  round(df.sub.pCO2$Sal_mean, digits= 2) ,
+                               '</br> Max: ', round(df.sub.pCO2$Sal_max, digits = 2),
+                               '</br> Min: ', round(df.sub.pCO2$Sal_min, digits = 2))) %>% 
+       layout(xaxis= a, yaxis = d, autosize = FALSE)
+     
+     if (input$sal_min == TRUE)
+       (plotlist<-append(plotlist, list(p8))) else
+       {plotlist<-plotlist}
+     
+ ### PLOT MIN CH4 ###
+     
+     # fill as soon as data is there
+     
+ ### PLOT MIN O2 ###
+     p10<- plot_ly(df.sub.pCO2, name = "Min O2",height = (400*(length(plotlist))),  width = 1200) %>% 
+       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$cO2_min,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                               '</br> Mean: ',  round(df.sub.pCO2$cO2_mean, digits= 2) ,
+                               '</br> Max: ', round(df.sub.pCO2$cO2_max, digits = 2),
+                               '</br> Min: ', round(df.sub.pCO2$cO2_min, digits = 2))) %>% 
+       layout(xaxis= a, yaxis = f, autosize = FALSE)
+     
+     if (input$o2_min == TRUE)
+       (plotlist<-append(plotlist, list(p10))) else
+       {plotlist<-plotlist}
+     
+ ### PLOT MAX pCO2 ###
+     
+     p11<- plot_ly(df.sub.pCO2, name = "Max pCO2" ,height = (400*(length(plotlist))),  width = 1200) %>% 
+       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                               '</br> Mean: ',  round(df.sub.pCO2$pCO2_mean, digits= 2) ,
+                               '</br> Max: ', round(df.sub.pCO2$pCO2_max, digits = 2),
+                               '</br> Min: ', round(df.sub.pCO2$pCO2_min, digits = 2))) %>% 
+       layout(xaxis= a, yaxis = b, autosize = FALSE)
+     
+     if (input$pCO2_max == TRUE)
+       (plotlist<-append(plotlist, list(p11))) else
+       {plotlist<-plotlist}
+     
+ ### PLOT MAX Temperatur ###
+     
+     p12<-plot_ly(df.sub.pCO2, name = "Max Temperature" ,height = (400*(length(plotlist))),  width = 1200) %>% 
+       
+       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$Tem_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                               '</br> Mean: ',  round(df.sub.pCO2$Tem_mean, digits= 2) ,
+                               '</br> Max: ', round(df.sub.pCO2$Tem_max, digits = 2),
+                               '</br> Min: ', round(df.sub.pCO2$Tem_min, digits = 2))) %>% 
+       layout(xaxis= a, yaxis = g, autosize = FALSE)
+     
+     if (input$temp_max == TRUE)
+       (plotlist<-append(plotlist, list(p12))) else
+       {plotlist<-plotlist}
+     
+ ### PLOT MAX SALINITY ###
+     p13<- plot_ly(df.sub.pCO2, name = "Max Salinity" ,height = (400*(length(plotlist))),  width = 1200) %>% 
+       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$Sal_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                               '</br> Mean: ',  round(df.sub.pCO2$Sal_mean, digits= 2) ,
+                               '</br> Max: ', round(df.sub.pCO2$Sal_max, digits = 2),
+                               '</br> Min: ', round(df.sub.pCO2$Sal_min, digits = 2))) %>% 
+       layout(xaxis= a, yaxis = d, autosize = FALSE)
+     
+     if (input$sal_max == TRUE)
+       (plotlist<-append(plotlist, list(p13))) else
+       {plotlist<-plotlist}
+     
+ ### PLOT MAX CH4 ###
+     
+     # add as soon as data is there
+     
+ ### PLOT MAX O2 ###
+     
+     p15<- plot_ly(df.sub.pCO2, name = "Max O2" ,height = (400*(length(plotlist))),  width = 1200) %>% 
+       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$cO2_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                               '</br> Mean: ',  round(df.sub.pCO2$cO2_mean, digits= 2) ,
+                               '</br> Max: ', round(df.sub.pCO2$cO2_max, digits = 2),
+                               '</br> Min: ', round(df.sub.pCO2$cO2_min, digits = 2))) %>% 
+       layout(xaxis= a, yaxis = f, autosize = FALSE) 
+     
+     if (input$o2_max == TRUE)
+       (plotlist<-append(plotlist, list(p15))) else
+       {plotlist<-plotlist}
+     
+ ### PLOT SD pCO2 ###
+     
+     p16<- plot_ly(df.sub.pCO2, name = "SD pCO2" ,height = (400*(length(plotlist))),  width = 1200) %>%
+       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_sd,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                               '</br> Mean: ',  round(df.sub.pCO2$pCO2_mean, digits= 2) ,
+                               '</br> Max: ', round(df.sub.pCO2$pCO2_max, digits = 2),
+                               '</br> Min: ', round(df.sub.pCO2$pCO2_min, digits = 2))) %>%
+       layout(xaxis= a, yaxis = b, autosize = FALSE)
+     
+     if (input$pCO2_sd == TRUE)
+       (plotlist<-append(plotlist, list(p16))) else
+       {plotlist<-plotlist}
+     
+ ### PLOT SD TEMPRATURE ###
+     
+     p17<-plot_ly(df.sub.pCO2, name = "SD Temperature" ,height = (400*(length(plotlist))),  width = 1200) %>% 
+       
+       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$Tem_sd,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                               '</br> Mean: ',  round(df.sub.pCO2$Tem_mean, digits= 2) ,
+                               '</br> Max: ', round(df.sub.pCO2$Tem_max, digits = 2),
+                               '</br> Min: ', round(df.sub.pCO2$Tem_min, digits = 2))) %>% 
+       layout(xaxis= a, yaxis = g, autosize = FALSE)
+     
+     if (input$temp_sd == TRUE)
+       (plotlist<-append(plotlist, list(p17))) else
+       {plotlist<-plotlist}
+     
+  ### PLOT SD SALINITY ###
+     
+      p18<- plot_ly(df.sub.pCO2, name = "SD Salinity" ,height = (400*(length(plotlist))),  width = 1200) %>% 
+       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$Sal_sd,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                               '</br> Mean: ',  round(df.sub.pCO2$Sal_mean, digits= 2) ,
+                               '</br> Max: ', round(df.sub.pCO2$Sal_max, digits = 2),
+                               '</br> Min: ', round(df.sub.pCO2$Sal_min, digits = 2))) %>% 
+       layout(xaxis= a, yaxis = d,autosize = FALSE)
+      
+      if (input$sal_sd == TRUE)
+        (plotlist<-append(plotlist, list(p18))) else
+        {plotlist<-plotlist} 
+ ### PLOT SD CH4 ###
+      
+      # add when data is available
+      
+ ### PLOT SD O2 ###
+      p20<- plot_ly(df.sub.pCO2, name = "SD O2" ,height = (400*(length(plotlist))),  width = 1200) %>% 
+        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$cO2_sd,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+                  text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                                '</br> Mean: ',  round(df.sub.pCO2$cO2_mean, digits= 2) ,
+                                '</br> Max: ', round(df.sub.pCO2$cO2_max, digits = 2),
+                                '</br> Min: ', round(df.sub.pCO2$cO2_min, digits = 2))) %>% 
+        layout(xaxis= a, yaxis = f, autosize = FALSE) 
+      
+      if (input$o2_sd == TRUE)
+        (plotlist<-append(plotlist, list(p20))) else
+        {plotlist<-plotlist}
+      
     subplot(plotlist, nrows= length(plotlist), shareX = TRUE, titleY = TRUE, titleX = TRUE)
   })
-  # Plot Min  Tempreature
-  output$plot_temp_min<-renderPlotly({
-    
-    if(input$routeall == TRUE)
-      Sub_temp <<- df %>% 
-        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
-    if (input$routeE == TRUE)
-      Sub_temp <<- df %>% 
-        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
-    if (input$routeW == TRUE)
-      Sub_temp <<-rbind(Sub_temp,df %>% 
-                          filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
-    if(input$routeS == TRUE)
-      Sub_temp <<-rbind(Sub_temp,df %>% 
-                          filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
-    if(input$routeP == TRUE)
-      Sub_temp <<-rbind(Sub_temp,df %>% 
-                          filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
-    if(input$routeG == TRUE)
-      Sub_temp <<-rbind(Sub_temp,df %>% 
-                          filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
-    
-    df.sub.mean.temp <- Sub_temp %>% 
-      group_by(ID) %>% 
-      summarise_all(funs(mean, "mean", mean(., na.rm = FALSE))) %>% 
-      dplyr::select(date_mean, Tem_mean)
-    
-    df.sub.min.max.temp <- Sub_temp %>% 
-      group_by(ID) %>% 
-      summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
-      dplyr::select(Tem_min, Tem_max)
-    
-    df.sub.temp<<-bind_cols(df.sub.mean.temp,df.sub.min.max.temp)
-    df.sub.temp$date_mean<<-as.Date(df.sub.temp$date_mean) 
-    p7<-plot_ly(df.sub.temp, name = "Min Temperature") %>%
-      
-      add_trace(x= df.sub.temp$date_mean, y= df.sub.temp$Tem_min,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                text = ~paste('</br> Date', df.sub.temp$date_mean,
-                              '</br> Mean: ',  round(df.sub.temp$Tem_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.temp$Tem_max, digits = 2),
-                              '</br> Min: ', round(df.sub.temp$Tem_min, digits = 2))) %>%
-      layout(xaxis= a, yaxis = g, title = "Minimum Temperature")
-    
-    if (input$temp_min == TRUE)
-      (p7) else
-      {img(src="placeholder.png", width = "100%")}
-  })
-  # # Plot Min Salinity
-  output$plot_sal_min <-renderPlotly({
-    if(input$routeall == TRUE)
-      Sub_sal <<- df %>% 
-        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,Sal,ID) else {NULL} 
-    if (input$routeE == TRUE)
-      Sub_sal <<- df %>% 
-        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,Sal,ID) else {NULL} 
-    if (input$routeW == TRUE)
-      Sub_sal <<-rbind(Sub_sal,df %>% 
-                         filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL} 
-    if(input$routeS == TRUE)
-      Sub_sal <<-rbind(Sub_sal,df %>% 
-                         filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL} 
-    if(input$routeP == TRUE)
-      Sub_sal <<-rbind(Sub_sal,df %>% 
-                         filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL}
-    if(input$routeG == TRUE)
-      Sub_sal <<-rbind(Sub_sal,df %>% 
-                         filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL}
-    
-    df.sub.mean.sal <- Sub_sal %>% 
-      group_by(ID) %>% 
-      summarise_all(funs(mean, "mean", mean(., na.rm = FALSE))) %>% 
-      dplyr::select(date_mean, Sal_mean)
-    
-    df.sub.min.max.sal <- Sub_sal %>% 
-      group_by(ID) %>% 
-      summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
-      dplyr::select(Sal_min, Sal_max)
-    
-    df.sub.sal<<-bind_cols(df.sub.mean.sal,df.sub.min.max.sal)
-    df.sub.sal$date_mean<<-as.Date(df.sub.sal$date_mean)
-    
-    p8<- plot_ly(df.sub.mean.sal, name = "Min Salinity") %>% 
-      add_trace(x= df.sub.sal$date_mean, y= df.sub.sal$Sal_min,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                text = ~paste('</br> Date', df.sub.sal$date_mean,
-                              '</br> Mean: ',  round(df.sub.sal$Sal_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.sal$Sal_max, digits = 2),
-                              '</br> Min: ', round(df.sub.sal$Sal_min, digits = 2))) %>% 
-      layout(xaxis= a, yaxis = d, title = "Minimum Salinity")
-    
-    if (input$sal_min == TRUE)
-      (p8) else
-      {NULL}
-  })
-  # Plot Min CH4
-  output$plot_ch4_min <-renderPlotly ({
-    if(input$routeall == TRUE)
-      Sub_ch4 <<- df %>% 
-        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,CH4,ID) else {NULL} 
-    if (input$routeE == TRUE)
-      Sub_ch4 <<- df %>% 
-        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,CH4,ID) else {NULL} 
-    if (input$routeW == TRUE)
-      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
-                         filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL} 
-    if(input$routeS == TRUE)
-      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
-                         filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL} 
-    if(input$routeP == TRUE)
-      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
-                         filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL}
-    if(input$routeG == TRUE)
-      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
-                         filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL}
-    
-    df.sub.mean.ch4 <- Sub_ch4 %>% 
-      group_by(ID) %>% 
-      summarise_all(funs(mean, "mean", mean(., na.rm = FALSE))) %>% 
-      dplyr::select(date_mean, CH4_mean)
-    
-    df.sub.min.max.ch4 <- Sub_ch4 %>% 
-      group_by(ID) %>% 
-      summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
-      dplyr::select(Sal_min, Sal_max)
-    
-    df.sub.ch4<<-bind_cols(df.sub.mean.ch4,df.sub.min.max.ch4)
-    df.sub.ch4$date_mean<<-as.Date(df.sub.ch4$date_mean) 
-    p9<- plot_ly(df.sub.mean.ch4, name = "Min CH4") %>% 
-      add_trace(x= df.sub.ch4$date_mean, y= df.sub.ch4$ch4_min,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                text = ~paste('</br> Date', df.sub.ch4$date_mean,
-                              '</br> Mean: ',  round(df.sub.ch4$ch4_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.ch4$ch4_max, digits = 2),
-                              '</br> Min: ', round(df.sub.ch4$ch4_min, digits = 2))) %>% 
-      layout(xaxis= a, yaxis = e, title = "Minimum CH4")
-    
-    if (input$ch4_min == TRUE)
-      (p9) else
-      {NULL}
-  })
-  # Plot Min O2
-  output$plot_o2_min <-renderPlotly ({
-    if(input$routeall == TRUE)
-      Sub_o2 <<- df %>% 
-        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,cO2,ID) else {NULL} 
-    if (input$routeE == TRUE)
-      Sub_o2 <<- df %>% 
-        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,cO2,ID) else {NULL} 
-    if (input$routeW == TRUE)
-      Sub_o2 <<-rbind(Sub_o2,df %>% 
-                        filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL} 
-    if(input$routeS == TRUE)
-      Sub_o2 <<-rbind(Sub_o2,df %>% 
-                        filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL} 
-    if(input$routeP == TRUE)
-      Sub_o2 <<-rbind(Sub_o2,df %>% 
-                        filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL}
-    if(input$routeG == TRUE)
-      Sub_o2 <<-rbind(Sub_o2,df %>% 
-                        filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL}
-    
-    df.sub.mean.o2 <- Sub_o2 %>% 
-      group_by(ID) %>% 
-      summarise_all(funs(mean, "mean", mean(., na.rm = FALSE))) %>% 
-      dplyr::select(date_mean, cO2_mean)
-    
-    df.sub.min.max.o2 <- Sub_o2 %>% 
-      group_by(ID) %>% 
-      summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
-      dplyr::select(cO2_min, cO2_max)
-    
-    df.sub.o2<<-bind_cols(df.sub.mean.o2,df.sub.min.max.o2)
-    
-    p10<- plot_ly(df.sub.mean.o2, name = "Min O2") %>% 
-      add_trace(x= df.sub.o2$date_mean, y= df.sub.o2$cO2_min,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                text = ~paste('</br> Date', df.sub.o2$date_mean,
-                              '</br> Mean: ',  round(df.sub.o2$cO2_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.o2$cO2_max, digits = 2),
-                              '</br> Min: ', round(df.sub.o2$cO2_min, digits = 2))) %>% 
-      layout(xaxis= a, yaxis = f, title = "Minimum O2")
-    if (input$o2_min == TRUE)
-      (p10) else
-      {NULL}
-  })
-  # # Plot Max  pCO2
-  output$plot_pCO2_max <- renderPlotly({
-    if(input$routeall == TRUE)
-      Sub_pCO2 <<- df %>% 
-        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
-    if (input$routeE == TRUE)
-      Sub_pCO2 <<- df %>% 
-        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
-    if (input$routeW == TRUE)
-      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
-                          filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
-    if(input$routeS == TRUE)
-      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
-                          filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
-    if(input$routeP == TRUE)
-      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
-                          filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
-    if(input$routeG == TRUE)
-      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
-                          filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
-    
-    df.sub.mean.pCO2 <- Sub_pCO2 %>% 
-      group_by(ID) %>% 
-      summarise_all(funs(mean, "mean", mean(., na.rm = FALSE))) %>% 
-      dplyr::select(date_mean, pCO2_mean)
-    
-    df.sub.min.max.pCO2 <- Sub_pCO2 %>% 
-      group_by(ID) %>% 
-      summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
-      dplyr::select(pCO2_min, pCO2_max)
-    
-    df.sub.pCO2<<-bind_cols(df.sub.mean.pCO2,df.sub.min.max.pCO2)
-    
-    p11<- plot_ly(df.sub.pCO2, name = "Max pCO2") %>% 
-      add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                text = ~paste('</br> Date', df.sub.pCO2$date_mean,
-                              '</br> Mean: ',  round(df.sub.pCO2$pCO2_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.pCO2$pCO2_max, digits = 2),
-                              '</br> Min: ', round(df.sub.pCO2$pCO2_min, digits = 2))) %>% 
-      layout(xaxis= a, yaxis = b, title = "Maximum pCO2")
-    if (input$pCO2_max == TRUE)
-      (p11) else
-      {NULL}
-  })
-  # # Plot Max  Tempreature
-  output$plot_temp_max<-renderPlotly({
-    if(input$routeall == TRUE)
-      Sub_temp <<- df %>% 
-        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
-    if (input$routeE == TRUE)
-      Sub_temp <<- df %>% 
-        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
-    if (input$routeW == TRUE)
-      Sub_temp <<-rbind(Sub_temp,df %>% 
-                          filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
-    if(input$routeS == TRUE)
-      Sub_temp <<-rbind(Sub_temp,df %>% 
-                          filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
-    if(input$routeP == TRUE)
-      Sub_temp <<-rbind(Sub_temp,df %>% 
-                          filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
-    if(input$routeG == TRUE)
-      Sub_temp <<-rbind(Sub_temp,df %>% 
-                          filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
-    
-    df.sub.mean.temp <- Sub_temp %>% 
-      group_by(ID) %>% 
-      summarise_all(funs(mean, "mean", mean(., na.rm = FALSE))) %>% 
-      dplyr::select(date_mean, Tem_mean)
-    
-    df.sub.min.max.temp <- Sub_temp %>% 
-      group_by(ID) %>% 
-      summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
-      dplyr::select(Tem_min, Tem_max)
-    
-    df.sub.temp<<-bind_cols(df.sub.mean.temp,df.sub.min.max.temp)
-    df.sub.temp$date_mean<<-as.Date(df.sub.temp$date_mean) 
-    p12<-plot_ly(df.sub.temp, name = " MaxTemperature") %>% 
-      
-      add_trace(x= df.sub.temp$date_mean, y= df.sub.temp$Tem_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                text = ~paste('</br> Date', df.sub.temp$date_mean,
-                              '</br> Mean: ',  round(df.sub.temp$Tem_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.temp$Tem_max, digits = 2),
-                              '</br> Min: ', round(df.sub.temp$Tem_min, digits = 2))) %>% 
-      layout(xaxis= a, yaxis = g, title = "Maximum Temperature")
-    if (input$temp_max == TRUE)
-      (p12) else
-      {NULL}
-  })
-  # # Plot Max Salinity
-  output$plot_sal_max<-renderPlotly({
-    if(input$routeall == TRUE)
-      Sub_sal <<- df %>% 
-        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,Sal,ID) else {NULL} 
-    if (input$routeE == TRUE)
-      Sub_sal <<- df %>% 
-        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,Sal,ID) else {NULL} 
-    if (input$routeW == TRUE)
-      Sub_sal <<-rbind(Sub_sal,df %>% 
-                         filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL} 
-    if(input$routeS == TRUE)
-      Sub_sal <<-rbind(Sub_sal,df %>% 
-                         filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL} 
-    if(input$routeP == TRUE)
-      Sub_sal <<-rbind(Sub_sal,df %>% 
-                         filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL}
-    if(input$routeG == TRUE)
-      Sub_sal <<-rbind(Sub_sal,df %>% 
-                         filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL}
-    
-    df.sub.mean.sal <- Sub_sal %>% 
-      group_by(ID) %>% 
-      summarise_all(funs(mean, "mean", mean(., na.rm = FALSE))) %>% 
-      dplyr::select(date_mean, Sal_mean)
-    
-    df.sub.min.max.sal <- Sub_sal %>% 
-      group_by(ID) %>% 
-      summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
-      dplyr::select(Sal_min, Sal_max)
-    
-    df.sub.sal<<-bind_cols(df.sub.mean.sal,df.sub.min.max.sal)
-    df.sub.sal$date_mean<<-as.Date(df.sub.sal$date_mean)
-    
-    p13<- plot_ly(df.sub.mean.sal, name = "Max Salinity") %>% 
-      add_trace(x= df.sub.sal$date_mean, y= df.sub.sal$Sal_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                text = ~paste('</br> Date', df.sub.sal$date_mean,
-                              '</br> Mean: ',  round(df.sub.sal$Sal_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.sal$Sal_max, digits = 2),
-                              '</br> Min: ', round(df.sub.sal$Sal_min, digits = 2))) %>% 
-      layout(xaxis= a, yaxis = d, title = "Maximum")
-    if (input$sal_max == TRUE)
-      (p13) else
-      {NULL}
-  })
-  # # Plot Max CH4
-  output$plot_ch4_max <-renderPlotly({
-    if(input$routeall == TRUE)
-      Sub_ch4 <<- df %>% 
-        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,CH4,ID) else {NULL} 
-    if (input$routeE == TRUE)
-      Sub_ch4 <<- df %>% 
-        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,CH4,ID) else {NULL} 
-    if (input$routeW == TRUE)
-      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
-                         filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL} 
-    if(input$routeS == TRUE)
-      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
-                         filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL} 
-    if(input$routeP == TRUE)
-      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
-                         filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL}
-    if(input$routeG == TRUE)
-      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
-                         filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL}
-    
-    df.sub.mean.ch4 <- Sub_ch4 %>% 
-      group_by(ID) %>% 
-      summarise_all(funs(mean, "mean", mean(., na.rm = FALSE))) %>% 
-      dplyr::select(date_mean, CH4_mean)
-    
-    df.sub.min.max.ch4 <- Sub_ch4 %>% 
-      group_by(ID) %>% 
-      summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
-      dplyr::select(ch4_min, ch4_max)
-    
-    df.sub.ch4<<-bind_cols(df.sub.mean.ch4,df.sub.min.max.ch4)
-    df.sub.ch4$date_mean<<-as.Date(df.sub.ch4$date_mean) 
-    
-    p14<- plot_ly(df.sub.mean.ch4, name = "Max CH4") %>% 
-      add_trace(x= df.sub.ch4$date_mean, y= df.sub.ch4$ch4_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                text = ~paste('</br> Date', df.sub.ch4$date_mean,
-                              '</br> Mean: ',  round(df.sub.ch4$ch4_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.ch4$ch4_max, digits = 2),
-                              '</br> Min: ', round(df.sub.ch4$ch4_min, digits = 2))) %>% 
-      layout(xaxis= a, yaxis = e, title = "Maximum CH4")
-    if (input$ch4_max == TRUE)
-      (p14) else
-      {NULL}
-  })
-  # # Plot Max O2
-  output$plot_o2_max<-renderPlotly({
-    if(input$routeall == TRUE)
-      Sub_o2 <<- df %>% 
-        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,cO2,ID) else {NULL} 
-    if (input$routeE == TRUE)
-      Sub_o2 <<- df %>% 
-        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,cO2,ID) else {NULL} 
-    if (input$routeW == TRUE)
-      Sub_o2 <<-rbind(Sub_o2,df %>% 
-                        filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL} 
-    if(input$routeS == TRUE)
-      Sub_o2 <<-rbind(Sub_o2,df %>% 
-                        filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL} 
-    if(input$routeP == TRUE)
-      Sub_o2 <<-rbind(Sub_o2,df %>% 
-                        filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL}
-    if(input$routeG == TRUE)
-      Sub_o2 <<-rbind(Sub_o2,df %>% 
-                        filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL}
-    
-    df.sub.mean.o2 <- Sub_o2 %>% 
-      group_by(ID) %>% 
-      summarise_all(funs(mean, "mean", mean(., na.rm = FALSE))) %>% 
-      dplyr::select(date_mean, cO2_mean)
-    
-    df.sub.min.max.o2 <- Sub_o2 %>% 
-      group_by(ID) %>% 
-      summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
-      dplyr::select(cO2_min, cO2_max)
-    
-    df.sub.o2<<-bind_cols(df.sub.mean.o2,df.sub.min.max.o2)
-    p15<- plot_ly(df.sub.mean.o2, name = "Max O2") %>% 
-      add_trace(x= df.sub.o2$date_mean, y= df.sub.o2$cO2_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                text = ~paste('</br> Date', df.sub.o2$date_mean,
-                              '</br> Mean: ',  round(df.sub.o2$cO2_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.o2$cO2_max, digits = 2),
-                              '</br> Min: ', round(df.sub.o2$cO2_min, digits = 2))) %>% 
-      layout(xaxis= a, yaxis = f, title = "Maximum cO2")
-    if (input$o2_max == TRUE)
-      (p15) else
-      {NULL}
-  })
-  # Plot STD  pCO2
-  output$plot_pCO2_sd<-renderPlotly({
-    if(input$routeall == TRUE)
-      Sub_pCO2 <<- df %>% 
-        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
-    if (input$routeE == TRUE)
-      Sub_pCO2 <<- df %>% 
-        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
-    if (input$routeW == TRUE)
-      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
-                          filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
-    if(input$routeS == TRUE)
-      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
-                          filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
-    if(input$routeP == TRUE)
-      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
-                          filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
-    if(input$routeG == TRUE)
-      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
-                          filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
-    
-    df.sub.mean.pCO2 <- Sub_pCO2 %>% 
-      group_by(ID) %>% 
-      summarise_all(funs(mean, "mean", mean(., na.rm = FALSE))) %>% 
-      dplyr::select(date_mean, pCO2_mean)
-    
-    df.sub.min.max.pCO2 <- Sub_pCO2 %>% 
-      group_by(ID) %>% 
-      summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
-      dplyr::select(pCO2_min, pCO2_max)
-    
-    df.sub.sd.pCO2<- Sub_pCO2 %>% 
-      group_by(ID) %>% 
-      summarise_all(funs(sd, "sd"), na.rm = FALSE) %>% 
-      dplyr::select(pCO2_sd)
-    
-    df.sub.pCO2<<-bind_cols(df.sub.mean.pCO2,df.sub.min.max.pCO2, df.sub.sd.pCO2)
-    p16<- plot_ly(df.sub.pCO2, name = "SD pCO2") %>%
-      add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_sd,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                text = ~paste('</br> Date', df.sub.pCO2$date_mean,
-                              '</br> Mean: ',  round(df.sub.pCO2$pCO2_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.pCO2$pCO2_max, digits = 2),
-                              '</br> Min: ', round(df.sub.pCO2$pCO2_min, digits = 2))) %>%
-      layout(xaxis= a, yaxis = b, title = "Standard Deviation pCO2")
-    if (input$pCO2_sd == TRUE)
-      (p16) else
-      {NULL}
-  })
-  # # Plot STD  Tempreature
-  output$plot_temp_sd<-renderPlotly({
-    if(input$routeall == TRUE)
-      Sub_temp <<- df %>% 
-        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
-    if (input$routeE == TRUE)
-      Sub_temp <<- df %>% 
-        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
-    if (input$routeW == TRUE)
-      Sub_temp <<-rbind(Sub_temp,df %>% 
-                          filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
-    if(input$routeS == TRUE)
-      Sub_temp <<-rbind(Sub_temp,df %>% 
-                          filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
-    if(input$routeP == TRUE)
-      Sub_temp <<-rbind(Sub_temp,df %>% 
-                          filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
-    if(input$routeG == TRUE)
-      Sub_temp <<-rbind(Sub_temp,df %>% 
-                          filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
-    
-    df.sub.mean.temp <- Sub_temp %>% 
-      group_by(ID) %>% 
-      summarise_all(funs(mean, "mean", mean(., na.rm = FALSE))) %>% 
-      dplyr::select(date_mean, Tem_mean)
-    
-    df.sub.min.max.temp <- Sub_temp %>% 
-      group_by(ID) %>% 
-      summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
-      dplyr::select(Tem_min, Tem_max)
-    
-    df.sub.sd.temp<- Sub_temp %>% 
-      group_by(ID) %>% 
-      summarise_all(funs(sd, "sd"), na.rm = FALSE) %>% 
-      dplyr::select(Tem_sd)
-    
-    df.sub.temp<<-bind_cols(df.sub.mean.temp,df.sub.min.max.temp, df.sub.sd.temp)
-    df.sub.temp$date_mean<<-as.Date(df.sub.temp$date_mean) 
-    p17<-plot_ly(df.sub.temp, name = "SD Temperature") %>% 
-      
-      add_trace(x= df.sub.temp$date_mean, y= df.sub.temp$Tem_sd,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                text = ~paste('</br> Date', df.sub.temp$date_mean,
-                              '</br> Mean: ',  round(df.sub.temp$Tem_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.temp$Tem_max, digits = 2),
-                              '</br> Min: ', round(df.sub.temp$Tem_min, digits = 2))) %>% 
-      layout(xaxis= a, yaxis = g, title = "Standard Deviation Temperature")
-    if(input$temp_sd == TRUE)
-      (p17) else
-      {NULL}
-  })
-  # # Plot STD Salinity
-  output$plot_sal_sd <-renderPlotly({
-    if(input$routeall == TRUE)
-      Sub_sal <<- df %>% 
-        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,Sal,ID) else {NULL} 
-    if (input$routeE == TRUE)
-      Sub_sal <<- df %>% 
-        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,Sal,ID) else {NULL} 
-    if (input$routeW == TRUE)
-      Sub_sal <<-rbind(Sub_sal,df %>% 
-                         filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL} 
-    if(input$routeS == TRUE)
-      Sub_sal <<-rbind(Sub_sal,df %>% 
-                         filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL} 
-    if(input$routeP == TRUE)
-      Sub_sal <<-rbind(Sub_sal,df %>% 
-                         filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL}
-    if(input$routeG == TRUE)
-      Sub_sal <<-rbind(Sub_sal,df %>% 
-                         filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,Sal,ID)) else {NULL}
-    
-    df.sub.mean.sal <- Sub_sal %>% 
-      group_by(ID) %>% 
-      summarise_all(funs(mean, "mean", mean(., na.rm = FALSE))) %>% 
-      dplyr::select(date_mean, Sal_mean)
-    
-    df.sub.min.max.sal <- Sub_sal %>% 
-      group_by(ID) %>% 
-      summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
-      dplyr::select(Sal_min, Sal_max)
-    
-    df.sub.sd.sal<- Sub_sal %>% 
-      group_by(ID) %>% 
-      summarise_all(funs(sd, "sd"), na.rm = FALSE) %>% 
-      dplyr::select(Sal_sd)
-    
-    df.sub.sal<<-bind_cols(df.sub.mean.sal,df.sub.min.max.sal, df.sub.sd.sal)
-    df.sub.sal$date_mean<<-as.Date(df.sub.sal$date_mean)
-    p18<- plot_ly(df.sub.mean.sal, name = "SD Salinity") %>% 
-      add_trace(x= df.sub.sal$date_mean, y= df.sub.sal$Sal_sd,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                text = ~paste('</br> Date', df.sub.sal$date_mean,
-                              '</br> Mean: ',  round(df.sub.sal$Sal_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.sal$Sal_max, digits = 2),
-                              '</br> Min: ', round(df.sub.sal$Sal_min, digits = 2))) %>% 
-      layout(xaxis= a, yaxis = d, title = "Standard Deviation Salinity")
-    if (input$sal_sd == TRUE)
-      (p18) else
-      {NULL}
-  })
-  # # Plot STD CH4
-  output$plot_ch4_sd <-renderPlotly({
-    if(input$routeall == TRUE)
-      Sub_ch4 <<- df %>% 
-        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,CH4,ID) else {NULL} 
-    if (input$routeE == TRUE)
-      Sub_ch4 <<- df %>% 
-        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,CH4,ID) else {NULL} 
-    if (input$routeW == TRUE)
-      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
-                         filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL} 
-    if(input$routeS == TRUE)
-      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
-                         filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL} 
-    if(input$routeP == TRUE)
-      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
-                         filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL}
-    if(input$routeG == TRUE)
-      Sub_ch4 <<-rbind(Sub_ch4,df %>% 
-                         filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                  Lon >= input$lon_low & Lon <= input$lon_high &
-                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                         dplyr::select(date,Lon,Lat,CH4,ID)) else {NULL}
-    
-    df.sub.mean.ch4 <- Sub_ch4 %>% 
-      group_by(ID) %>% 
-      summarise_all(funs(mean, "mean", mean(., na.rm = FALSE))) %>% 
-      dplyr::select(date_mean, CH4_mean)
-    
-    df.sub.min.max.ch4 <- Sub_ch4 %>% 
-      group_by(ID) %>% 
-      summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
-      dplyr::select(Sal_min, Sal_max)
-    
-    df.sub.sd.ch4<- Sub_ch4 %>% 
-      group_by(ID) %>% 
-      summarise_all(funs(sd, "sd"), na.rm = FALSE) %>% 
-      dplyr::select(ch4_sd)
-    
-    
-    df.sub.ch4<<-bind_cols(df.sub.mean.ch4,df.sub.min.max.ch4, df.sub.sd.ch4)
-    df.sub.ch4$date_mean<<-as.Date(df.sub.ch4$date_mean) 
-    p19<- plot_ly(df.sub.mean.ch4, name = "SD CH4") %>% 
-      add_trace(x= df.sub.ch4$date_mean, y= df.sub.ch4$ch4_std,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                text = ~paste('</br> Date', df.sub.ch4$date_mean,
-                              '</br> Mean: ',  round(df.sub.ch4$ch4_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.ch4$ch4_max, digits = 2),
-                              '</br> Min: ', round(df.sub.ch4$ch4_min, digits = 2))) %>% 
-      layout(xaxis= a, yaxis = e, title = "Standard Deviation CH4")
-    if (input$ch4_sd == TRUE)
-      (p19) else
-      {NULL}
-  })
-  # # Plot STD O2
-  output$plot_o2_sd<-renderPlotly({
-    if(input$routeall == TRUE)
-      Sub_o2 <<- df %>% 
-        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,cO2,ID) else {NULL} 
-    if (input$routeE == TRUE)
-      Sub_o2 <<- df %>% 
-        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,cO2,ID) else {NULL} 
-    if (input$routeW == TRUE)
-      Sub_o2 <<-rbind(Sub_o2,df %>% 
-                        filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL} 
-    if(input$routeS == TRUE)
-      Sub_o2 <<-rbind(Sub_o2,df %>% 
-                        filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL} 
-    if(input$routeP == TRUE)
-      Sub_o2 <<-rbind(Sub_o2,df %>% 
-                        filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL}
-    if(input$routeG == TRUE)
-      Sub_o2 <<-rbind(Sub_o2,df %>% 
-                        filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL}
-    if (input$routeE == TRUE)
-      Sub_o2 <<- df %>% 
-        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,cO2,ID) else {NULL} 
-    if (input$routeW == TRUE)
-      Sub_o2 <<-rbind(Sub_o2,df %>% 
-                        filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL} 
-    if(input$routeS == TRUE)
-      Sub_o2 <<-rbind(Sub_o2,df %>% 
-                        filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL} 
-    if(input$routeP == TRUE)
-      Sub_o2 <<-rbind(Sub_o2,df %>% 
-                        filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL}
-    if(input$routeG == TRUE)
-      Sub_o2 <<-rbind(Sub_o2,df %>% 
-                        filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,cO2,ID)) else {NULL}
-    
-    df.sub.mean.o2 <- Sub_o2 %>% 
-      group_by(ID) %>% 
-      summarise_all(funs(mean, "mean", mean(., na.rm = FALSE))) %>% 
-      dplyr::select(date_mean, cO2_mean)
-    
-    df.sub.min.max.o2 <- Sub_o2 %>% 
-      group_by(ID) %>% 
-      summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
-      dplyr::select(cO2_min, cO2_max)
-    
-    df.sub.sd.o2<- Sub_o2 %>% 
-      group_by(ID) %>% 
-      summarise_all(funs(sd, "sd"), na.rm = FALSE) %>% 
-      dplyr::select(cO2_sd)
-    df.sub.o2<<-bind_cols(df.sub.mean.o2,df.sub.min.max.o2, df.sub.sd.o2)
-    df.sub.o2$date_mean<<-as.Date(df.sub.o2$date_mean) 
-    
-    p20<- plot_ly(df.sub.mean.o2, name = "SD O2") %>% 
-      add_trace(x= df.sub.o2$date_mean, y= df.sub.o2$cO2_sd,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                text = ~paste('</br> Date', df.sub.o2$date_mean,
-                              '</br> Mean: ',  round(df.sub.o2$cO2_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.o2$cO2_max, digits = 2),
-                              '</br> Min: ', round(df.sub.o2$cO2_min, digits = 2))) %>% 
-      layout(xaxis= a, yaxis = f, title = "Standard Deviation cO2")
-    if (input$o2_sd == TRUE)
-      (p20) else
-      {NULL}
-  })
-  # 04d: CheckboxPlots, HovmÃÂ¶ller ------------------------------------
+ 
+  # 04d: CheckboxPlots, Hovmöller ------------------------------------
 #HovmÃÂ¶ller Plot pCO2 Mean
   
   output$hov_pCO2_mean <- renderPlot({
