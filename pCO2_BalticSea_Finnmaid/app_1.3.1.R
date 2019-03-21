@@ -317,7 +317,7 @@ server <- function(input, output) {
     
     df.sub.pCO2<<-bind_cols(df.sub.mean.pCO2,df.sub.min.max.pCO2)
     
-    p1<-plot_ly(df.sub.pCO2, name = "Mean pCO2", height = function(){500*length(plotlist)}, width = 800) %>% 
+    p1<-plot_ly(df.sub.pCO2, name = "Mean pCO2", height = (400*(length(plotlist))), width = 800) %>% 
       add_trace(x= ~df.sub.pCO2$date_mean, y= ~df.sub.pCO2$pCO2_mean,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
                               '</br> Mean: ',  round(df.sub.pCO2$pCO2_mean, digits= 2) ,
@@ -330,7 +330,7 @@ server <- function(input, output) {
       (plotlist<-list(p1)) else
       {plotlist<-plotlist}
   
-    p2<-plot_ly(df.sub.pCO2, name = "Mean Temperature",  width = 800) %>% 
+    p2<-plot_ly(df.sub.pCO2, name = "Mean Temperature", height = (400*(length(plotlist))),  width = 1200) %>% 
       
       add_trace(x= ~df.sub.pCO2$date_mean, y= ~df.sub.pCO2$Tem_mean,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
@@ -343,7 +343,7 @@ server <- function(input, output) {
       (plotlist<-append(plotlist, list(p2))) else
       {plotlist<-plotlist}
  
-  p3<- plot_ly(df.sub.pCO2, name = "Mean Salinity", width = 800) %>% 
+  p3<- plot_ly(df.sub.pCO2, name = "Mean Salinity",height = (400*(length(plotlist))), width = 1200) %>% 
       add_trace(x= ~ df.sub.pCO2$date_mean, y= ~ df.sub.pCO2$Sal_mean,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
                               '</br> Mean: ',  round(df.sub.pCO2$Sal_mean, digits= 2) ,
@@ -356,7 +356,7 @@ server <- function(input, output) {
       {plotlist<-plotlist}
  ### PLOT MEAN CH4 ###
   
-     p4<- plot_ly(df.sub.pCO2, name = "Mean CH4",  width = 800) %>% 
+     p4<- plot_ly(df.sub.pCO2, name = "Mean CH4",height = (400*(length(plotlist))),  width = 1200) %>% 
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$ch4_mean,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
                  text = ~paste('</br> Date', df.sub.pCO2$date_mean,
                                '</br> Mean: ',  round(df.sub.pCO2$ch4_mean, digits= 2) ,
@@ -369,26 +369,26 @@ server <- function(input, output) {
           {plotlist<-plotlist}
  ### PLOT MEAN O2
      
-     p5<- plot_ly(df.sub.pCO2, name = "Mean O2",  width = 800) %>%
+     p5<- plot_ly(df.sub.pCO2, name = "Mean O2",height = (400*(length(plotlist))),  width = 1200) %>%
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$cO2_mean,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
                  text = ~paste('</br> Date', df.sub.pCO2$date_mean,
                                '</br> Mean: ',  round(df.sub.pCO2$cO2_mean, digits= 2) ,
                                '</br> Max: ', round(df.sub.pCO2$cO2_max, digits = 2),
                                '</br> Min: ', round(df.sub.pCO2$cO2_min, digits = 2))) %>%
-       layout(xaxis= a, yaxis = f, title = "Mean O2",  autosize= FALSE)
+       layout(xaxis= a, yaxis = f,  autosize= FALSE)
      
      if (input$o2_mean == TRUE)
        (plotlist<-append(plotlist, list(p5))) else
        {plotlist<-plotlist}
     ### PLOT MIN pCO2 ###
      
-     p6<- plot_ly(df.sub.pCO2, name = "Min pCO2",  width = 800) %>%
+     p6<- plot_ly(df.sub.pCO2, name = "Min pCO2",height = (400*(length(plotlist))),  width = 1200) %>%
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_min,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
                  text = ~paste('</br> Date', df.sub.pCO2$date_mean,
                                '</br> Mean: ',  round(df.sub.pCO2$pCO2_mean, digits= 2) ,
                                '</br> Max: ', round(df.sub.pCO2$pCO2_max, digits = 2),
                                '</br> Min: ', round(df.sub.pCO2$pCO2_min, digits = 2))) %>%
-       layout(xaxis= a, yaxis = b, title= "Minimum pCO2",  autosize= FALSE)
+       layout(xaxis= a, yaxis = b,  autosize= FALSE)
      
      if (input$pCO2_min == TRUE)
        (plotlist<-append(plotlist, list(p6))) else
