@@ -14,6 +14,7 @@ library(plotly)
 library(base)
 library(plyr)
 library(dplyr)
+library(geosphere)
 
 
 # 01: load data -- -------------------------------------------------------------
@@ -127,7 +128,13 @@ ui <- fluidPage(
                                   plotOutput("hov_temp_mean"),
                                   plotOutput("hov_sal_mean"),
                                   #plotOutput("hov_ch4_mean"),
-                                  plotOutput("hov_o2_mean")))
+                                  plotOutput("hov_o2_mean")),
+              tabPanel("Transektplots",
+                       plotlyOutput("trans_pCO2"),
+                       plotlyOutput("trans_temp"),
+                       plotlyOutput("trans_sal"),
+                       #plotlyOutput("trans_ch4"),
+                       plotlyOutput("trans_o2")))
              
       )
     )
@@ -361,7 +368,7 @@ server <- function(input, output) {
   
 # add when data is available
      
- ### PLOT MEAN O2
+### PLOT MEAN O2
      
      p5<- plot_ly(df.sub.pCO2, name = "Mean O2",height = (400*(length(plotlist))),  width = 1200) %>%
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$cO2_mean,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
@@ -374,7 +381,8 @@ server <- function(input, output) {
      if (input$o2_mean == TRUE)
        (plotlist<-append(plotlist, list(p5))) else
        {plotlist<-plotlist}
-    ### PLOT MIN pCO2 ###
+    
+### PLOT MIN pCO2 ###
      
      p6<- plot_ly(df.sub.pCO2, name = "Min pCO2",height = (400*(length(plotlist))),  width = 1200) %>%
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_min,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
@@ -388,7 +396,7 @@ server <- function(input, output) {
        (plotlist<-append(plotlist, list(p6))) else
        {plotlist<-plotlist}
      
-  ### PLOT MIN TEMPERATURE ###   
+### PLOT MIN TEMPERATURE ###   
      p7<-plot_ly(df.sub.pCO2, name = "Min Temperature",height = (400*(length(plotlist))),  width = 1200) %>%
        
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$Tem_min,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
@@ -402,7 +410,7 @@ server <- function(input, output) {
        (plotlist<-append(plotlist, list(p7))) else
        {plotlist<-plotlist}
      
- ### PLOT MIN SALINITY
+### PLOT MIN SALINITY
      
      p8<- plot_ly(df.sub.pCO2, name = "Min Salinity",height = (400*(length(plotlist))),  width = 1200) %>% 
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$Sal_min,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
@@ -416,11 +424,11 @@ server <- function(input, output) {
        (plotlist<-append(plotlist, list(p8))) else
        {plotlist<-plotlist}
      
- ### PLOT MIN CH4 ###
+### PLOT MIN CH4 ###
      
      # fill as soon as data is there
      
- ### PLOT MIN O2 ###
+### PLOT MIN O2 ###
      p10<- plot_ly(df.sub.pCO2, name = "Min O2",height = (400*(length(plotlist))),  width = 1200) %>% 
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$cO2_min,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
                  text = ~paste('</br> Date', df.sub.pCO2$date_mean,
@@ -433,7 +441,7 @@ server <- function(input, output) {
        (plotlist<-append(plotlist, list(p10))) else
        {plotlist<-plotlist}
      
- ### PLOT MAX pCO2 ###
+### PLOT MAX pCO2 ###
      
      p11<- plot_ly(df.sub.pCO2, name = "Max pCO2" ,height = (400*(length(plotlist))),  width = 1200) %>% 
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
@@ -447,7 +455,7 @@ server <- function(input, output) {
        (plotlist<-append(plotlist, list(p11))) else
        {plotlist<-plotlist}
      
- ### PLOT MAX Temperatur ###
+### PLOT MAX Temperatur ###
      
      p12<-plot_ly(df.sub.pCO2, name = "Max Temperature" ,height = (400*(length(plotlist))),  width = 1200) %>% 
        
@@ -462,7 +470,7 @@ server <- function(input, output) {
        (plotlist<-append(plotlist, list(p12))) else
        {plotlist<-plotlist}
      
- ### PLOT MAX SALINITY ###
+### PLOT MAX SALINITY ###
      p13<- plot_ly(df.sub.pCO2, name = "Max Salinity" ,height = (400*(length(plotlist))),  width = 1200) %>% 
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$Sal_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
                  text = ~paste('</br> Date', df.sub.pCO2$date_mean,
@@ -475,11 +483,11 @@ server <- function(input, output) {
        (plotlist<-append(plotlist, list(p13))) else
        {plotlist<-plotlist}
      
- ### PLOT MAX CH4 ###
+### PLOT MAX CH4 ###
      
      # add as soon as data is there
      
- ### PLOT MAX O2 ###
+### PLOT MAX O2 ###
      
      p15<- plot_ly(df.sub.pCO2, name = "Max O2" ,height = (400*(length(plotlist))),  width = 1200) %>% 
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$cO2_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
@@ -493,7 +501,7 @@ server <- function(input, output) {
        (plotlist<-append(plotlist, list(p15))) else
        {plotlist<-plotlist}
      
- ### PLOT SD pCO2 ###
+### PLOT SD pCO2 ###
      
      p16<- plot_ly(df.sub.pCO2, name = "SD pCO2" ,height = (400*(length(plotlist))),  width = 1200) %>%
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_sd,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
@@ -507,7 +515,7 @@ server <- function(input, output) {
        (plotlist<-append(plotlist, list(p16))) else
        {plotlist<-plotlist}
      
- ### PLOT SD TEMPRATURE ###
+### PLOT SD TEMPRATURE ###
      
      p17<-plot_ly(df.sub.pCO2, name = "SD Temperature" ,height = (400*(length(plotlist))),  width = 1200) %>% 
        
@@ -521,8 +529,8 @@ server <- function(input, output) {
      if (input$temp_sd == TRUE)
        (plotlist<-append(plotlist, list(p17))) else
        {plotlist<-plotlist}
-     
-  ### PLOT SD SALINITY ###
+
+### PLOT SD SALINITY ###
      
       p18<- plot_ly(df.sub.pCO2, name = "SD Salinity" ,height = (400*(length(plotlist))),  width = 1200) %>% 
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$Sal_sd,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
@@ -535,11 +543,11 @@ server <- function(input, output) {
       if (input$sal_sd == TRUE)
         (plotlist<-append(plotlist, list(p18))) else
         {plotlist<-plotlist} 
- ### PLOT SD CH4 ###
+### PLOT SD CH4 ###
       
       # add when data is available
       
- ### PLOT SD O2 ###
+### PLOT SD O2 ###
       p20<- plot_ly(df.sub.pCO2, name = "SD O2" ,height = (400*(length(plotlist))),  width = 1200) %>% 
         add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$cO2_sd,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
                   text = ~paste('</br> Date', df.sub.pCO2$date_mean,
@@ -556,7 +564,7 @@ server <- function(input, output) {
   })
  
   # 04d: CheckboxPlots, Hovmöller ------------------------------------
-#HovmÃÂ¶ller Plot pCO2 Mean
+#Hovmöller Plot pCO2 Mean
   
   output$hov_pCO2_mean <- renderPlot({
     
@@ -605,38 +613,45 @@ server <- function(input, output) {
   #east in cut umschreiben, mean function so wie oben anwenden, nicht diese komische variante von Jens, die funltioniert nicht
   cut_pCO2<-Sub_pCO2
   #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= 55, to = 60, by=0.02), labels = seq(from= 55+0.02, to= 60, by=0.02))
-  cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= input$lat_low, to = input$lat_high, by=0.02), labels = seq(from= input$lat_low+0.02, to= input$lat_high, by=0.02))
+  #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= input$lat_low, to = input$lat_high, by=0.02), labels = seq(from= input$lat_low+0.02, to= input$lat_high, by=0.02))
+  cut_pCO2$dist.Hel<-distGeo(cbind(Sub_pCO2$Lon, Sub_pCO2$Lat), Hel)/1e3
+  cut_pCO2$dist.Hel.int<-cut(cut_pCO2$dist.Hel, seq(0, 1200, 50), labels =
+                               seq(25, 1175, 50))
+  
   cut_pCO2$week <- cut(cut_pCO2$date, breaks="weeks")
   cut_pCO2$week <- as.Date(cut_pCO2$week, tz="GMT")
   
+  
   cut_pCO2_mean<-cut_pCO2 %>% 
-    dplyr::select(Lat.int, week, pCO2) %>% 
-    group_by(Lat.int, week) %>% 
+    dplyr::select(dist.Hel.int, week, pCO2) %>% 
+    group_by(dist.Hel.int, week) %>% 
     summarise_all(funs(mean, "mean", mean(.,na.rm = FALSE))) %>% 
     as.data.frame() 
   
   cut_pCO2_mean$pCO2_mean<-cut_pCO2_mean$mean
+  cut_pCO2_mean$dist.Hel.int<-as.numeric(as.character(cut_pCO2_mean$dist.Hel.int))
   
   cut_pCO2_mean$week<-as.POSIXct(cut_pCO2_mean$week)
-  #cut_pCO2_mean$Lat.int<-as.character(cut_pCO2_mean$Lat.int)
   
   hov1 <-
     ggplot(data= cut_pCO2_mean)+
-    geom_raster(aes(week, Lat.int, fill= pCO2_mean))+
-    scale_fill_gradientn(colours=c("#0000FFFF","#FFFFFFFF","#FF0000FF"))+
+    geom_raster(aes(week, dist.Hel.int, fill= pCO2_mean))+
+    scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("pCO2[µatm]"))+
+   
     #until here working well and looking good
     #xlim(as.POSIXct("2003/1/1"), as.POSIXct("2018/1/1"))+
-    #geom_vline(xintercept = as.numeric(seq(as.POSIXct("2003/1/1", tz="GMT"), 
-    #                                      as.POSIXct("2018/1/1", tz="GMT"), 
-     #                                      "years")),
-      #         size=1)+
-    #scale_fill_gradient(heat.colors)+
-                         #(name=expression("pCO2[ÃÂµatm]")+
-                         #limits=c(100, 600))+
+    geom_vline(xintercept = as.numeric(seq(as.POSIXct("2003/1/1", tz="GMT"), 
+                                          as.POSIXct("2018/1/1", tz="GMT"), 
+                                          "years")),
+               size=1)+
+    #scale_color_brewer(palette="Set1", name="pCO2 (µatm)")+
+     #                    (name=expression("pCO2[µatm]")+
+      #                   limits=c(100, 600))+
+    scale_x_datetime(breaks= "1 year", date_labels = "%Y")+
     #scale_x_datetime(breaks = seq(as.POSIXct("2004/1/1", tz="GMT"), as.POSIXct("2016/1/1", tz="GMT"), "2 years"),
      #                expand = c(0,0))+
-    #scale_y_continuous(breaks = seq(55, 60, 2))+
-    labs(y="Latitude (ÃÂ°N)")+
+    scale_y_continuous(breaks = seq(55, 60, 2))+
+    labs(y="Distance to Helsinki [km])")+
     theme(
       axis.title.x = element_blank(),
       legend.position = "bottom",
@@ -652,7 +667,106 @@ server <- function(input, output) {
   
   })
 #HovmÃÂ¶ller Plot Temperatur Mean
-  
+  output$hov_temp_mean <- renderPlot({
+    
+    
+    if(input$routeall == TRUE)
+      Sub_pCO2 <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_pCO2 <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,Sal,cO2,ID)) else {NULL}
+    
+    
+    
+    #Sub_pCO2$date <- as.POSIXct(strptime(Sub_pCO2$date, format="%Y-%m-%d %H:%M:%S", tz="GMT"))
+    
+    #east in cut umschreiben, mean function so wie oben anwenden, nicht diese komische variante von Jens, die funltioniert nicht
+    cut_temp<-Sub_pCO2
+    #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= 55, to = 60, by=0.02), labels = seq(from= 55+0.02, to= 60, by=0.02))
+    #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= input$lat_low, to = input$lat_high, by=0.02), labels = seq(from= input$lat_low+0.02, to= input$lat_high, by=0.02))
+    cut_temp$dist.Hel<-distGeo(cbind(Sub_pCO2$Lon, Sub_pCO2$Lat), Hel)/1e3
+    cut_temp$dist.Hel.int<-cut(cut_temp$dist.Hel, seq(0, 1200, 50), labels =
+                                 seq(25, 1175, 50))
+    
+    cut_temp$week <- cut(cut_temp$date, breaks="weeks")
+    cut_temp$week <- as.Date(cut_temp$week, tz="GMT")
+    
+    
+    cut_temp_mean<-cut_temp %>% 
+      dplyr::select(dist.Hel.int, week, Tem) %>% 
+      group_by(dist.Hel.int, week) %>% 
+      summarise_all(funs(mean, "mean", mean(.,na.rm = FALSE))) %>% 
+      as.data.frame() 
+    
+    cut_temp_mean$Tem_mean<-cut_temp_mean$mean
+    cut_temp_mean$dist.Hel.int<-as.numeric(as.character(cut_temp_mean$dist.Hel.int))
+    
+    cut_temp_mean$week<-as.POSIXct(cut_temp_mean$week)
+    
+    hov2 <-
+      ggplot(data= cut_temp_mean)+
+      geom_raster(aes(week, dist.Hel.int, fill= Tem_mean))+
+      scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("Temperature [°C]"))+
+      
+      #until here working well and looking good
+      #xlim(as.POSIXct("2003/1/1"), as.POSIXct("2018/1/1"))+
+      geom_vline(xintercept = as.numeric(seq(as.POSIXct("2003/1/1", tz="GMT"), 
+                                             as.POSIXct("2018/1/1", tz="GMT"), 
+                                             "years")),
+                 size=1)+
+      #scale_color_brewer(palette="Set1", name="pCO2 (µatm)")+
+      #                    (name=expression("pCO2[µatm]")+
+      #                   limits=c(100, 600))+
+      scale_x_datetime(breaks= "1 year", date_labels = "%Y")+
+      #scale_x_datetime(breaks = seq(as.POSIXct("2004/1/1", tz="GMT"), as.POSIXct("2016/1/1", tz="GMT"), "2 years"),
+      #                expand = c(0,0))+
+      scale_y_continuous(breaks = seq(55, 60, 2))+
+      labs(y="Distance to Helsinki [km])")+
+      theme(
+        axis.title.x = element_blank(),
+        legend.position = "bottom",
+        legend.key.width = unit(1.3, "cm"),
+        legend.key.height = unit(0.3, "cm")
+      )
+    
+    
+    
+    if (input$temp_mean == TRUE)
+      (hov2) else
+      {NULL}
+    
+  })
   
   
 #HovmÃÂ¶ller Plot Salinity Mean
@@ -671,7 +785,7 @@ server <- function(input, output) {
   # 04e: Textoutput HovmÃÂ¶ller, restrictions
   
   output$restrictions <-renderText({
-    paste("For HovmÃÂ¶ller Plots only the options 'pCO2 mean', 'temp mean', 'Sal mean', 'CH4 mean' and ' O2 mean' are available.")
+    paste("For Hovmöller Plots only the options 'pCO2 mean', 'temp mean', 'Sal mean', 'CH4 mean' and ' O2 mean' are available.")
   })
   # 04e: download CSV ------------------------------------------------
   
