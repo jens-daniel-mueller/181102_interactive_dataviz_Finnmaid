@@ -666,7 +666,7 @@ server <- function(input, output) {
     {NULL}
   
   })
-#HovmÃÂ¶ller Plot Temperatur Mean
+#Hovmöller Plot Temperatur Mean
   output$hov_temp_mean <- renderPlot({
     
     
@@ -770,6 +770,106 @@ server <- function(input, output) {
   
   
 #HovmÃÂ¶ller Plot Salinity Mean
+  output$hov_sal_mean <- renderPlot({
+    
+    
+    if(input$routeall == TRUE)
+      Sub_pCO2 <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_pCO2 <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,Sal,cO2,ID)) else {NULL}
+    
+    
+    
+    #Sub_pCO2$date <- as.POSIXct(strptime(Sub_pCO2$date, format="%Y-%m-%d %H:%M:%S", tz="GMT"))
+    
+    
+    cut_sal<-Sub_pCO2
+    #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= 55, to = 60, by=0.02), labels = seq(from= 55+0.02, to= 60, by=0.02))
+    #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= input$lat_low, to = input$lat_high, by=0.02), labels = seq(from= input$lat_low+0.02, to= input$lat_high, by=0.02))
+    cut_sal$dist.Hel<-distGeo(cbind(cut_sal$Lon, cut_sal$Lat), Hel)/1e3
+    cut_sal$dist.Hel.int<-cut(cut_sal$dist.Hel, seq(0, 1200, 50), labels =
+                                 seq(25, 1175, 50))
+    
+    cut_sal$week <- cut(cut_sal$date, breaks="weeks")
+    cut_sal$week <- as.Date(cut_sal$week, tz="GMT")
+    
+    
+    cut_sal_mean<-cut_sal %>% 
+      dplyr::select(dist.Hel.int, week, Sal) %>% 
+      group_by(dist.Hel.int, week) %>% 
+      summarise_all(funs(mean, "mean", mean(.,na.rm = FALSE))) %>% 
+      as.data.frame() 
+    
+    cut_sal_mean$Sal_mean<-cut_sal_mean$mean
+    cut_sal_mean$dist.Hel.int<-as.numeric(as.character(cut_sal_mean$dist.Hel.int))
+    
+    cut_sal_mean$week<-as.POSIXct(cut_sal_mean$week)
+    
+    hov3 <-
+      ggplot(data= cut_sal_mean)+
+      geom_raster(aes(week, dist.Hel.int, fill= Sal_mean))+
+      scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("Salinity[‰]"))+
+      
+      #until here working well and looking good
+      #xlim(as.POSIXct("2003/1/1"), as.POSIXct("2018/1/1"))+
+      geom_vline(xintercept = as.numeric(seq(as.POSIXct("2003/1/1", tz="GMT"), 
+                                             as.POSIXct("2018/1/1", tz="GMT"), 
+                                             "years")),
+                 size=1)+
+      #scale_color_brewer(palette="Set1", name="pCO2 (µatm)")+
+      #                    (name=expression("pCO2[µatm]")+
+      #                   limits=c(100, 600))+
+      scale_x_datetime(breaks= "1 year", date_labels = "%Y")+
+      #scale_x_datetime(breaks = seq(as.POSIXct("2004/1/1", tz="GMT"), as.POSIXct("2016/1/1", tz="GMT"), "2 years"),
+      #                expand = c(0,0))+
+      scale_y_continuous(breaks = seq(55, 60, 2))+
+      labs(y="Distance to Helsinki [km])")+
+      theme(
+        axis.title.x = element_blank(),
+        legend.position = "bottom",
+        legend.key.width = unit(1.3, "cm"),
+        legend.key.height = unit(0.3, "cm")
+      )
+    
+    
+    
+    if (input$sal_mean == TRUE)
+      (hov3) else
+      {NULL}
+    
+  })
   
   
   
@@ -778,7 +878,106 @@ server <- function(input, output) {
   
   
 #HovmÃÂ¶ller Plot O2
-  
+  output$hov_sal_mean <- renderPlot({
+    
+    
+    if(input$routeall == TRUE)
+      Sub_pCO2 <<- df %>% 
+        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID,cO2) else {NULL} 
+    if (input$routeE == TRUE)
+      Sub_pCO2 <<- df %>% 
+        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID, cO2) else {NULL} 
+    if (input$routeW == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID, cO2)) else {NULL} 
+    if(input$routeS == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID, cO2)) else {NULL} 
+    if(input$routeP == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID, cO2)) else {NULL}
+    if(input$routeG == TRUE)
+      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+                          filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,Sal,cO2,ID, cO2)) else {NULL}
+    
+    
+    
+    #Sub_pCO2$date <- as.POSIXct(strptime(Sub_pCO2$date, format="%Y-%m-%d %H:%M:%S", tz="GMT"))
+    
+    #east in cut umschreiben, mean function so wie oben anwenden, nicht diese komische variante von Jens, die funltioniert nicht
+    cut_o2<-Sub_pCO2
+    #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= 55, to = 60, by=0.02), labels = seq(from= 55+0.02, to= 60, by=0.02))
+    #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= input$lat_low, to = input$lat_high, by=0.02), labels = seq(from= input$lat_low+0.02, to= input$lat_high, by=0.02))
+    cut_o2$dist.Hel<-distGeo(cbind(cut_o2$Lon, cut_o2$Lat), Hel)/1e3
+    cut_o2$dist.Hel.int<-cut(cut_o2$dist.Hel, seq(0, 1200, 50), labels =
+                                seq(25, 1175, 50))
+    
+    cut_o2$week <- cut(cut_o2$date, breaks="weeks")
+    cut_o2$week <- as.Date(cut_o2$week, tz="GMT")
+    
+    
+    cut_o2_mean<-cut_o2 %>% 
+      dplyr::select(dist.Hel.int, week, cO2) %>% 
+      group_by(dist.Hel.int, week) %>% 
+      summarise_all(funs(mean, "mean", mean(.,na.rm = FALSE))) %>% 
+      as.data.frame() 
+    
+    cut_o2_mean$Sal_mean<-cut_o2_mean$mean
+    cut_o2_mean$dist.Hel.int<-as.numeric(as.character(cut_o2_mean$dist.Hel.int))
+    
+    cut_o2_mean$week<-as.POSIXct(cut_o2_mean$week)
+    
+    hov4 <-
+      ggplot(data= cut_o2_mean)+
+      geom_raster(aes(week, dist.Hel.int, fill= Sal_mean))+
+      scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("O2[‰]"))+
+      
+      #until here working well and looking good
+      #xlim(as.POSIXct("2003/1/1"), as.POSIXct("2018/1/1"))+
+      geom_vline(xintercept = as.numeric(seq(as.POSIXct("2003/1/1", tz="GMT"), 
+                                             as.POSIXct("2018/1/1", tz="GMT"), 
+                                             "years")),
+                 size=1)+
+      #scale_color_brewer(palette="Set1", name="pCO2 (µatm)")+
+      #                    (name=expression("pCO2[µatm]")+
+      #                   limits=c(100, 600))+
+      scale_x_datetime(breaks= "1 year", date_labels = "%Y")+
+      #scale_x_datetime(breaks = seq(as.POSIXct("2004/1/1", tz="GMT"), as.POSIXct("2016/1/1", tz="GMT"), "2 years"),
+      #                expand = c(0,0))+
+      scale_y_continuous(breaks = seq(55, 60, 2))+
+      labs(y="Distance to Helsinki [km])")+
+      theme(
+        axis.title.x = element_blank(),
+        legend.position = "bottom",
+        legend.key.width = unit(1.3, "cm"),
+        legend.key.height = unit(0.3, "cm")
+      )
+    
+    
+    
+    if (input$o2_mean == TRUE)
+      (hov4) else
+      {NULL}
+    
+  }) 
   
   
   
