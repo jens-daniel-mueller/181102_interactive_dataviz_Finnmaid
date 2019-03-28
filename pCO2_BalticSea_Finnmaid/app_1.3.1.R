@@ -81,7 +81,7 @@ ui <- fluidPage(
                column(3,
                       checkboxInput('pCO2_mean', 'pCO2 Mean', value = TRUE),
                       checkboxInput('temp_mean', 'Temp Mean', value = TRUE),
-                      checkboxInput('sal_mean', 'Sal Mean'),
+                      checkboxInput('sal_mean', 'Sal Mean', value = TRUE),
                       checkboxInput('ch4_mean', ' CH4 Mean'),
                       checkboxInput('o2_mean', 'O2 Mean')
                ),
@@ -107,11 +107,11 @@ ui <- fluidPage(
                       checkboxInput('o2_sd', 'O2 SD')
                )
              ),
-             submitButton("Apply Change"),
              img(src="finnmaid.png", width = "100%"),
              selectInput("dataset", "Choose a dataset:",
-                         choices = c("pCO2", "Temperature", "Salinity", "CH4", "O2")),
+                         choices = c("Time Series Data", "Hovmöller Data", "Transect Data")),
              downloadButton("downloadData", "Download"),
+             submitButton("Apply Change"),
              offset = 1),
       # Show plots of the data
       column(8, 
@@ -119,7 +119,7 @@ ui <- fluidPage(
           textOutput("ValuesPerPoint"),
           
           tabsetPanel(type = "tabs",
-              tabPanel("Scatterplot",
+              tabPanel("Time Series",
                        plotlyOutput("plot_checkbox", inline = TRUE)
                        ),
                          tabPanel("Hovmöller", 
@@ -769,46 +769,46 @@ server <- function(input, output) {
   })
   
   
-#HovmÃÂ¶ller Plot Salinity Mean
+#Hovmöller Plot Salinity Mean
   output$hov_sal_mean <- renderPlot({
     
     
     if(input$routeall == TRUE)
-      Sub_pCO2 <<- df %>% 
+      Sub_pCO2 <- df %>% 
         filter(date >=input$daterange[1] & date <=input$daterange[2] & 
                  Lon >= input$lon_low & Lon <= input$lon_high &
                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal) else {NULL} 
+        dplyr::select(date,Lon,Lat,ID, Sal) else {NULL} 
     if (input$routeE == TRUE)
-      Sub_pCO2 <<- df %>% 
+      Sub_pCO2 <- df %>% 
         filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
                  Lon >= input$lon_low & Lon <= input$lon_high &
                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal) else {NULL} 
+        dplyr::select(date,Lon,Lat,ID, Sal) else {NULL} 
     if (input$routeW == TRUE)
-      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+      Sub_pCO2 <-rbind(Sub_pCO2,df %>% 
                           filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
                                    Lon >= input$lon_low & Lon <= input$lon_high &
                                    Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal)) else {NULL} 
+                          dplyr::select(date,Lon,Lat,ID, Sal)) else {NULL} 
     if(input$routeS == TRUE)
-      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+      Sub_pCO2 <-rbind(Sub_pCO2,df %>% 
                           filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
                                    Lon >= input$lon_low & Lon <= input$lon_high &
                                    Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal)) else {NULL} 
+                          dplyr::select(date,Lon,Lat,ID, Sal)) else {NULL} 
     if(input$routeP == TRUE)
-      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
+      Sub_pCO2 <-rbind(Sub_pCO2,df %>% 
                           filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
                                    Lon >= input$lon_low & Lon <= input$lon_high &
                                    Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal)) else {NULL}
+                          dplyr::select(date,Lon,Lat,ID, Sal)) else {NULL}
     if(input$routeG == TRUE)
       Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
                           filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
                                    Lon >= input$lon_low & Lon <= input$lon_high &
                                    Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,Sal,cO2,ID)) else {NULL}
+                          dplyr::select(date,Lon,Lat,ID, Sal)) else {NULL}
     
     
     
@@ -854,7 +854,7 @@ server <- function(input, output) {
       scale_x_datetime(breaks= "1 year", date_labels = "%Y")+
       #scale_x_datetime(breaks = seq(as.POSIXct("2004/1/1", tz="GMT"), as.POSIXct("2016/1/1", tz="GMT"), "2 years"),
       #                expand = c(0,0))+
-      scale_y_continuous(breaks = seq(55, 60, 2))+
+      scale_y_continuous(breaks = seq(0, 600, 50))+
       labs(y="Distance to Helsinki [km])")+
       theme(
         axis.title.x = element_blank(),
@@ -878,7 +878,7 @@ server <- function(input, output) {
   
   
 #HovmÃÂ¶ller Plot O2
-  output$hov_sal_mean <- renderPlot({
+  output$hov_o2_mean <- renderPlot({
     
     
     if(input$routeall == TRUE)
@@ -886,44 +886,44 @@ server <- function(input, output) {
         filter(date >=input$daterange[1] & date <=input$daterange[2] & 
                  Lon >= input$lon_low & Lon <= input$lon_high &
                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,pCO2,Tem,ID,cO2) else {NULL} 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID,cO2, Sal) else {NULL} 
     if (input$routeE == TRUE)
       Sub_pCO2 <<- df %>% 
         filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
                  Lon >= input$lon_low & Lon <= input$lon_high &
                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,pCO2,Tem,ID, cO2) else {NULL} 
+        dplyr::select(date,Lon,Lat,pCO2,Tem,ID, cO2, Sal) else {NULL} 
     if (input$routeW == TRUE)
       Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
                           filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
                                    Lon >= input$lon_low & Lon <= input$lon_high &
                                    Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID, cO2)) else {NULL} 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID, cO2, Sal)) else {NULL} 
     if(input$routeS == TRUE)
       Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
                           filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
                                    Lon >= input$lon_low & Lon <= input$lon_high &
                                    Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID, cO2)) else {NULL} 
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID, cO2, Sal)) else {NULL} 
     if(input$routeP == TRUE)
       Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
                           filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
                                    Lon >= input$lon_low & Lon <= input$lon_high &
                                    Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID, cO2)) else {NULL}
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID, cO2, Sal)) else {NULL}
     if(input$routeG == TRUE)
       Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
                           filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
                                    Lon >= input$lon_low & Lon <= input$lon_high &
                                    Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,Sal,cO2,ID, cO2)) else {NULL}
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,Sal,cO2,ID)) else {NULL}
     
     
     
     #Sub_pCO2$date <- as.POSIXct(strptime(Sub_pCO2$date, format="%Y-%m-%d %H:%M:%S", tz="GMT"))
     
     #east in cut umschreiben, mean function so wie oben anwenden, nicht diese komische variante von Jens, die funltioniert nicht
-    cut_o2<-Sub_pCO2
+    cut_o2<<-Sub_pCO2
     #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= 55, to = 60, by=0.02), labels = seq(from= 55+0.02, to= 60, by=0.02))
     #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= input$lat_low, to = input$lat_high, by=0.02), labels = seq(from= input$lat_low+0.02, to= input$lat_high, by=0.02))
     cut_o2$dist.Hel<-distGeo(cbind(cut_o2$Lon, cut_o2$Lat), Hel)/1e3
@@ -977,6 +977,26 @@ server <- function(input, output) {
       (hov4) else
       {NULL}
     
+    
+    cut_hov<<-Sub_pCO2
+    cut_hov$dist.Hel<<-distGeo(cbind(cut_hov$Lon, cut_hov$Lat), Hel)/1e3
+    cut_hov$dist.Hel.int<<-cut(cut_hov$dist.Hel, seq(0, 1200, 50), labels =
+                                 seq(25, 1175, 50))
+    
+    cut_hov$week <<- cut(cut_hov$date, breaks="weeks")
+    cut_hov$week <<- as.Date(cut_hov$week, tz="GMT")
+    
+    
+    cut_hov_mean<<-cut_hov %>% 
+      dplyr::select(dist.Hel.int, week, cO2, Sal, pCO2, Tem) %>% 
+      group_by(dist.Hel.int, week) %>% 
+      summarise_all(funs(mean, "mean", mean(.,na.rm = FALSE))) %>% 
+      as.data.frame() 
+    
+    cut_hov_mean$dist.Hel.int<<-as.numeric(as.character(cut_hov_mean$dist.Hel.int))
+    
+    cut_hov_mean$week<<-as.POSIXct(cut_hov_mean$week)  
+    
   }) 
   
   
@@ -988,15 +1008,14 @@ server <- function(input, output) {
   })
   # 04e: download CSV ------------------------------------------------
   
+ 
   datasetInput <<- reactive({
     switch(input$dataset,
-           "pCO2" = df.sub.pCO2,
-           "Temperature" = df.sub.temp #,
-           #"Salinity" = df.sub.sal,
-           # "CH4" = df.sub.ch4
-           ,
-           "O2" = df.sub.o2
+           "Time Series Data"=df.sub.pCO2,
+           "Hovmöller Data" =cut_hov_mean,
+           "Transect Data" = df.sub.pCO2
     )
+    
   })
   output$downloadData <- downloadHandler(
     filename = function()
