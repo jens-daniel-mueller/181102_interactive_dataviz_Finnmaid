@@ -977,26 +977,6 @@ server <- function(input, output) {
       (hov4) else
       {NULL}
     
-    
-    cut_hov<<-Sub_pCO2
-    cut_hov$dist.Hel<<-distGeo(cbind(cut_hov$Lon, cut_hov$Lat), Hel)/1e3
-    cut_hov$dist.Hel.int<<-cut(cut_hov$dist.Hel, seq(0, 1200, 50), labels =
-                                 seq(25, 1175, 50))
-    
-    cut_hov$week <<- cut(cut_hov$date, breaks="weeks")
-    cut_hov$week <<- as.Date(cut_hov$week, tz="GMT")
-    
-    
-    cut_hov_mean<<-cut_hov %>% 
-      dplyr::select(dist.Hel.int, week, cO2, Sal, pCO2, Tem) %>% 
-      group_by(dist.Hel.int, week) %>% 
-      summarise_all(funs(mean, "mean", mean(.,na.rm = FALSE))) %>% 
-      as.data.frame() 
-    
-    cut_hov_mean$dist.Hel.int<<-as.numeric(as.character(cut_hov_mean$dist.Hel.int))
-    
-    cut_hov_mean$week<<-as.POSIXct(cut_hov_mean$week)  
-    
   }) 
   
   
@@ -1006,8 +986,50 @@ server <- function(input, output) {
   output$restrictions <-renderText({
     paste("For Hovmöller Plots only the options 'pCO2 mean', 'temp mean', 'Sal mean', 'CH4 mean' and ' O2 mean' are available.")
   })
-  # 04e: download CSV ------------------------------------------------
+  # 04e: Transect Plots -------------------------------------------------- 
   
+  output$trans_pCO2 <- renderPlotly({
+    
+    
+    trans1<-plotly()
+    l= input$daterange[1]
+    for i in l:(l+30){
+      
+    }
+    
+  # irgendwie so wird es funktionieren  
+    trans_sub %>% 
+      + group_by(date) %>% 
+      + ggplot(aes(x= Lon, y = pCO2, color = date))+
+      + geom_line()
+    
+    
+    
+
+    
+    
+  })
+  
+  
+  # 04f: download CSV ------------------------------------------------
+  # cut_hov<<-Sub_pCO2
+  # cut_hov$dist.Hel<<-distGeo(cbind(cut_hov$Lon, cut_hov$Lat), Hel)/1e3
+  # cut_hov$dist.Hel.int<<-cut(cut_hov$dist.Hel, seq(0, 1200, 50), labels =
+  #                              seq(25, 1175, 50))
+  # 
+  # cut_hov$week <<- cut(cut_hov$date, breaks="weeks")
+  # cut_hov$week <<- as.Date(cut_hov$week, tz="GMT")
+  # 
+  # 
+  # cut_hov_mean<<-cut_hov %>% 
+  #   dplyr::select(dist.Hel.int, week, cO2, Sal, pCO2, Tem) %>% 
+  #   group_by(dist.Hel.int, week) %>% 
+  #   summarise_all(funs(mean, "mean", mean(.,na.rm = FALSE))) %>% 
+  #   as.data.frame() 
+  # 
+  # cut_hov_mean$dist.Hel.int<<-as.numeric(as.character(cut_hov_mean$dist.Hel.int))
+  # 
+  # cut_hov_mean$week<<-as.POSIXct(cut_hov_mean$week) 
  
   datasetInput <<- reactive({
     switch(input$dataset,
@@ -1023,6 +1045,9 @@ server <- function(input, output) {
     content = function(file)
     {write.csv(datasetInput(), file, row.names = FALSE)}
   )
+  
+
+  
   } #end server function
 # 05: Run the app -----------------------------------------------------------
 shinyApp(ui = ui, server = server)
