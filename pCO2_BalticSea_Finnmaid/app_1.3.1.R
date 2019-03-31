@@ -19,10 +19,11 @@ library(geosphere)
 
 # 01: load data -- -------------------------------------------------------------
 
-#df <- data.table(read.csv("../Finnmaid_all_2003-2018.csv"))
+df <- data.table(read.csv("../Finnmaid_all_2003-2018.csv"))
 df$date<-as.Date(df$date)
 df$route<-as.character(df$route)
 x<-c(0,0)
+Hel <- c(24.945831, 60.192059)
 # 02: map attributes  -----------------------------------------------------------
 baltic.coastlines <- ggplot2::map_data('world')#, xlim = c(4, 29), ylim = c(50, 66))
 land.colour   <- "grey75"
@@ -610,7 +611,7 @@ server <- function(input, output) {
   
   #Sub_pCO2$date <- as.POSIXct(strptime(Sub_pCO2$date, format="%Y-%m-%d %H:%M:%S", tz="GMT"))
 
-  #east in cut umschreiben, mean function so wie oben anwenden, nicht diese komische variante von Jens, die funltioniert nicht
+ 
   cut_pCO2<-Sub_pCO2
   #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= 55, to = 60, by=0.02), labels = seq(from= 55+0.02, to= 60, by=0.02))
   #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= input$lat_low, to = input$lat_high, by=0.02), labels = seq(from= input$lat_low+0.02, to= input$lat_high, by=0.02))
@@ -711,7 +712,7 @@ server <- function(input, output) {
     
     #Sub_pCO2$date <- as.POSIXct(strptime(Sub_pCO2$date, format="%Y-%m-%d %H:%M:%S", tz="GMT"))
     
-    #east in cut umschreiben, mean function so wie oben anwenden, nicht diese komische variante von Jens, die funltioniert nicht
+   
     cut_temp<-Sub_pCO2
     #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= 55, to = 60, by=0.02), labels = seq(from= 55+0.02, to= 60, by=0.02))
     #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= input$lat_low, to = input$lat_high, by=0.02), labels = seq(from= input$lat_low+0.02, to= input$lat_high, by=0.02))
@@ -922,7 +923,7 @@ server <- function(input, output) {
     
     #Sub_pCO2$date <- as.POSIXct(strptime(Sub_pCO2$date, format="%Y-%m-%d %H:%M:%S", tz="GMT"))
     
-    #east in cut umschreiben, mean function so wie oben anwenden, nicht diese komische variante von Jens, die funltioniert nicht
+    
     cut_o2<<-Sub_pCO2
     #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= 55, to = 60, by=0.02), labels = seq(from= 55+0.02, to= 60, by=0.02))
     #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= input$lat_low, to = input$lat_high, by=0.02), labels = seq(from= input$lat_low+0.02, to= input$lat_high, by=0.02))
@@ -949,8 +950,6 @@ server <- function(input, output) {
       ggplot(data= cut_o2_mean)+
       geom_raster(aes(week, dist.Hel.int, fill= Sal_mean))+
       scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("O2[‰]"))+
-      
-      #until here working well and looking good
       #xlim(as.POSIXct("2003/1/1"), as.POSIXct("2018/1/1"))+
       geom_vline(xintercept = as.numeric(seq(as.POSIXct("2003/1/1", tz="GMT"), 
                                              as.POSIXct("2018/1/1", tz="GMT"), 
@@ -991,24 +990,64 @@ server <- function(input, output) {
   output$trans_pCO2 <- renderPlotly({
     
     
-    trans1<-plotly()
-    l= input$daterange[1]
-    for i in l:(l+30){
-      
-    }
+    if(input$routeall == TRUE)
+      trans_sub <<- df %>% 
+        filter(date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,pCO2, Lat) else {NULL} 
+    if (input$routeE == TRUE)
+      trans_sub <- df %>% 
+        filter(route == "E", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
+                 Lon >= input$lon_low & Lon <= input$lon_high &
+                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        dplyr::select(date,Lon,pCO2, Lat) else {NULL} 
+    if (input$routeW == TRUE)
+      trans_sub <-rbind(trans_sub,df %>% 
+                          filter(route == "W", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2)) else {NULL}  
+    if(input$routeS == TRUE)
+      trans_sub <-rbind(trans_sub,df %>% 
+                          filter(route == "S", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2)) else {NULL} 
+    if(input$routeP == TRUE)
+      trans_sub <-rbind(trans_sub,df %>% 
+                          filter(route == "P", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2)) else {NULL}
+    if(input$routeG == TRUE)
+      trans_sub <-rbind(trans_sub,df %>% 
+                          filter(route == "G", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
+                                   Lon >= input$lon_low & Lon <= input$lon_high &
+                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+                          dplyr::select(date,Lon,Lat,pCO2)) else {NULL}
     
-  # irgendwie so wird es funktionieren  
-    trans_sub %>% 
-      + group_by(date) %>% 
-      + ggplot(aes(x= Lon, y = pCO2, color = date))+
-      + geom_line()
+    cut_trans<-trans_sub
+        cut_trans$dist.Hel<-distGeo(cbind(cut_trans$Lon, cut_trans$Lat), Hel)/1e3
+    cut_trans$dist.Hel.int<-cut(cut_trans$dist.Hel, seq(0, 1200, 50), labels =
+                               seq(25, 1175, 50))
+    #cut_trans$week <- cut(cut_trans$date, breaks="weeks")
+    #cut_trans$week <- as.Date(cut_trans$week, tz="GMT")
     
+    # irgendwie so wird es funktionieren  
+    cut_trans$date<-as.character(cut_trans$date)
+    cut_trans<-cut_trans %>% arrange(desc(date))
     
-    
-
-    
-    
-  })
+    cut_trans %>% 
+       group_by(date) %>% 
+       ggplot(aes(x= dist.Hel, y= pCO2, color = date))+
+      geom_line()+
+      scale_color_brewer(palette="RdGy", direction = -1)
+      #scale_color_manual(values=c("red", "gray31","gray33","gray35","gray37","gray39","gray41","gray43","gray45",
+       #                           "gray47","gray49","gray51","gray53","gray55","gray57","gray59","gray61","gray63",
+        #                          "gray65","gray67","gray69","gray71","gray73","gray75","gray77","gray79","gray81",
+         #                         "gray83","gray85","gray87"))
+    })
   
   
   # 04f: download CSV ------------------------------------------------
