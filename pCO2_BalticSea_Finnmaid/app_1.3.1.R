@@ -123,7 +123,7 @@ ui <- fluidPage(
               tabPanel("Time Series",
                        plotlyOutput("plot_checkbox", inline = TRUE)
                        ),
-                         tabPanel("Hovmöller", 
+                         tabPanel("Hovmoeller", 
                                   textOutput("restrictions"),
                                   plotOutput("hov_pCO2_mean"),
                                   plotOutput("hov_temp_mean"),
@@ -588,8 +588,8 @@ server <- function(input, output) {
     subplot(plotlist, nrows= length(plotlist), shareX = TRUE, titleY = TRUE, titleX = TRUE)
   })
  
-  # 04d: CheckboxPlots, Hovmöller ------------------------------------
-#Hovmöller Plot pCO2 Mean
+  # 04d: CheckboxPlots, Hovmoeller ------------------------------------
+#Hovmoeller Plot pCO2 Mean
   
   output$hov_pCO2_mean <- renderPlot({
     
@@ -691,7 +691,7 @@ server <- function(input, output) {
     {NULL}
   
   })
-#Hovmöller Plot Temperatur Mean
+#Hovmoeller Plot Temperatur Mean
   output$hov_temp_mean <- renderPlot({
     
     
@@ -794,7 +794,7 @@ server <- function(input, output) {
   })
   
   
-#Hovmöller Plot Salinity Mean
+#Hovmoeller Plot Salinity Mean
   output$hov_sal_mean <- renderPlot({
     
     
@@ -1004,10 +1004,10 @@ server <- function(input, output) {
   
   
   
-  # 04e: Textoutput HovmÃÂ¶ller, restrictions
+  # 04e: Textoutput Hovmoeller, restrictions
   
   output$restrictions <-renderText({
-    paste("For Hovmöller Plots only the options 'pCO2 mean', 'temp mean', 'Sal mean', 'CH4 mean' and ' O2 mean' are available.")
+    paste("For Hovmoeller Plots only the options 'pCO2 mean', 'temp mean', 'Sal mean', 'CH4 mean' and ' O2 mean' are available.")
   })
   # 04e: Transect Plots -------------------------------------------------- 
 
