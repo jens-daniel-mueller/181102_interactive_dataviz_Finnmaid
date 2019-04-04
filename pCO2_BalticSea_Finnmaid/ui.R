@@ -7,43 +7,22 @@
 ##########################################################################
 # 00: load packages -- ---------------------------------------------------------
 library(shiny)
-library(base)
 library(data.table)
 library(ggplot2)
-library(plyr)
-library(dplyr)
 library(maps)
 library(plotly)
+library(base)
+library(plyr)
+library(dplyr)
+library(geosphere)
+
 
 # 01: load data -- -------------------------------------------------------------
 
 df <- data.table(read.csv("../Finnmaid_all_2003-2018.csv"))
 df$date<-as.Date(df$date)
 df$route<-as.character(df$route)
-# 02: map attributes  -----------------------------------------------------------
-baltic.coastlines <- ggplot2::map_data('world')#, xlim = c(4, 29), ylim = c(50, 66))
-land.colour   <- "grey75"
-border.colour <- "grey10"
-basemap= baltic.coastlines
-xmin= 10
-xmax= 31.5
-ymin=53.5
-ymax=61
-# definition of routes to plot in map plot
-#I chose one ID for each route (E,W,G,P,S) randomly and saved the corresponding data 
-# as individual route subsets 
-# This data is used in the depiction of routes in the map as an easy and fast(!) solution
-routeE<-df %>% 
-  filter(ID == "06-06-22")
-routeW<-df %>% 
-  filter(ID == "06-07-22")
-routeG<-df %>% 
-  filter(ID == "20090816")
-routeP<-df %>% 
-  filter(ID == "20131111")
-routeS<-df %>% 
-  filter(ID == "20150728")
-routeall<-rbind(routeE, routeS, routeP, routeG, routeW)
+
 # 03: define UI --------------------------------------------------------------
 ui <- fluidPage(
   fluidRow(
@@ -76,9 +55,9 @@ ui <- fluidPage(
              
              fluidRow(
                column(3,
-                      checkboxInput('pCO2_mean', 'pCO2 Mean'),
-                      checkboxInput('temp_mean', 'Temp Mean'),
-                      checkboxInput('sal_mean', 'Sal Mean'),
+                      checkboxInput('pCO2_mean', 'pCO2 Mean', value = TRUE),
+                      checkboxInput('temp_mean', 'Temp Mean', value = TRUE),
+                      checkboxInput('sal_mean', 'Sal Mean', value = TRUE),
                       checkboxInput('ch4_mean', ' CH4 Mean'),
                       checkboxInput('o2_mean', 'O2 Mean')
                ),
@@ -104,38 +83,20 @@ ui <- fluidPage(
                       checkboxInput('o2_sd', 'O2 SD')
                )
              ),
-             submitButton("Apply Change"),
              img(src="finnmaid.png", width = "100%"),
              selectInput("dataset", "Choose a dataset:",
-                         choices = c("pCO2", "Temperature", "Salinity", "CH4", "O2")),
+                         choices = c("Time Series Data", "Hovmöller Data", "Transect Data")),
              downloadButton("downloadData", "Download"),
+             submitButton("Apply Change"),
              offset = 1),
       # Show plots of the data
       column(8, 
-             plotOutput("mapPlot"),  
+             plotOutput("mapPlot"), 
+             textOutput("ValuesPerPoint"),
              
              tabsetPanel(type = "tabs",
-                         tabPanel("Scatterplot",
-                                  plotlyOutput("plot_pCO2_mean"),
-                                  plotlyOutput("plot_temp_mean"),
-                                  plotlyOutput("plot_sal_mean"),
-                                  #plotlyOutput("plot_ch4_mean"),
-                                  plotlyOutput("plot_o2_mean"),
-                                  plotlyOutput("plot_pCO2_min"),
-                                  plotlyOutput("plot_temp_min"),
-                                  plotlyOutput("plot_sal_min"),
-                                  # plotlyOutput("plot_ch4_min"),
-                                  plotlyOutput("plot_o2_min"),
-                                  plotlyOutput("plot_pCO2_max"),
-                                  plotlyOutput("plot_temp_max"),
-                                  plotlyOutput("plot_sal_max"),
-                                  # plotlyOutput("plot_ch4_max"),
-                                  plotlyOutput("plot_o2_max"),
-                                  plotlyOutput("plot_pCO2_sd"),
-                                  plotlyOutput("plot_temp_sd"),
-                                  plotlyOutput("plot_sal_sd"),
-                                  # plotlyOutput("plot_ch4_sd"),
-                                  plotlyOutput("plot_o2_sd")
+                         tabPanel("Time Series",
+                                  plotlyOutput("plot_checkbox", inline = TRUE)
                          ),
                          tabPanel("Hovmöller", 
                                   textOutput("restrictions"),
@@ -143,8 +104,14 @@ ui <- fluidPage(
                                   plotOutput("hov_temp_mean"),
                                   plotOutput("hov_sal_mean"),
                                   #plotOutput("hov_ch4_mean"),
-                                  plotOutput("hov_o2_mean"))),
-             textOutput("ValuesPerPoint")
+                                  plotOutput("hov_o2_mean")),
+                         tabPanel("Transektplots",
+                                  plotlyOutput("trans_pCO2"),
+                                  plotlyOutput("trans_temp"),
+                                  plotlyOutput("trans_sal"),
+                                  #plotlyOutput("trans_ch4"),
+                                  plotlyOutput("trans_o2")))
+             
       )
     )
   )
