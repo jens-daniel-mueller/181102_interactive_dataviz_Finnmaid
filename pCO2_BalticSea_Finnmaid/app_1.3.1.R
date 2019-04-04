@@ -110,7 +110,7 @@ ui <- fluidPage(
              ),
              img(src="finnmaid.png", width = "100%"),
              selectInput("dataset", "Choose a dataset:",
-                         choices = c("Time Series Data", "Hovmöller Data", "Transect Data")),
+                         choices = c("Time Series Data", "Hovmoeller Data", "Transect Data")),
              downloadButton("downloadData", "Download"),
              submitButton("Apply Change"),
              offset = 1),
@@ -135,7 +135,9 @@ ui <- fluidPage(
                        plotlyOutput("trans_temp"),
                        plotlyOutput("trans_sal"),
                        #plotlyOutput("trans_ch4"),
-                       plotlyOutput("trans_o2")))
+                       plotlyOutput("trans_o2")),
+              tabPanel("Table Output",
+                       tableOutput("datatable")))
              
       )
     )
@@ -634,27 +636,27 @@ server <- function(input, output) {
   #Sub_pCO2$date <- as.POSIXct(strptime(Sub_pCO2$date, format="%Y-%m-%d %H:%M:%S", tz="GMT"))
 
  
-  cut_pCO2<-Sub_pCO2
+  cut_pCO2<<-Sub_pCO2
   #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= 55, to = 60, by=0.02), labels = seq(from= 55+0.02, to= 60, by=0.02))
   #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= input$lat_low, to = input$lat_high, by=0.02), labels = seq(from= input$lat_low+0.02, to= input$lat_high, by=0.02))
-  cut_pCO2$dist.Hel<-distGeo(cbind(Sub_pCO2$Lon, Sub_pCO2$Lat), Hel)/1e3
-  cut_pCO2$dist.Hel.int<-cut(cut_pCO2$dist.Hel, seq(0, 1200, 50), labels =
+  cut_pCO2$dist.Hel<<-distGeo(cbind(Sub_pCO2$Lon, Sub_pCO2$Lat), Hel)/1e3
+  cut_pCO2$dist.Hel.int<<-cut(cut_pCO2$dist.Hel, seq(0, 1200, 50), labels =
                                seq(25, 1175, 50))
   
-  cut_pCO2$week <- cut(cut_pCO2$date, breaks="weeks")
-  cut_pCO2$week <- as.Date(cut_pCO2$week, tz="GMT")
+  cut_pCO2$week <<- cut(cut_pCO2$date, breaks="weeks")
+  cut_pCO2$week <<- as.Date(cut_pCO2$week, tz="GMT")
   
   
-  cut_pCO2_mean<-cut_pCO2 %>% 
+  cut_pCO2_mean<<-cut_pCO2 %>% 
     dplyr::select(dist.Hel.int, week, pCO2) %>% 
     group_by(dist.Hel.int, week) %>% 
     summarise_all(funs(mean, "mean", mean(.,na.rm = FALSE))) %>% 
     as.data.frame() 
   
-  cut_pCO2_mean$pCO2_mean<-cut_pCO2_mean$mean
-  cut_pCO2_mean$dist.Hel.int<-as.numeric(as.character(cut_pCO2_mean$dist.Hel.int))
+  cut_pCO2_mean$pCO2_mean<<-cut_pCO2_mean$mean
+  cut_pCO2_mean$dist.Hel.int<<-as.numeric(as.character(cut_pCO2_mean$dist.Hel.int))
   
-  cut_pCO2_mean$week<-as.POSIXct(cut_pCO2_mean$week)
+  cut_pCO2_mean$week<<-as.POSIXct(cut_pCO2_mean$week)
   
   hov1 <-
     ggplot(data= cut_pCO2_mean)+
@@ -1194,7 +1196,7 @@ output$trans_sal <- renderPlotly({
           geom_line()+
           scale_color_brewer(palette="RdGy", direction = -1)
         
-        if (input$pCO2_mean == TRUE)
+        if (input$sal_mean == TRUE)
           (t3) else
           {NULL}
 })
@@ -1240,16 +1242,16 @@ output$trans_o2 <- renderPlotly({
                                  Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
                         dplyr::select(date,Lon,Lat,pCO2, Sal, Tem, cO2)) else {NULL}
   
-  cut_trans<-trans_sub
-  cut_trans$dist.Hel<-distGeo(cbind(cut_trans$Lon, cut_trans$Lat), Hel)/1e3
-  cut_trans$dist.Hel.int<-cut(cut_trans$dist.Hel, seq(0, 1200, 50), labels =
+  cut_trans<<-trans_sub
+  cut_trans$dist.Hel<<-distGeo(cbind(cut_trans$Lon, cut_trans$Lat), Hel)/1e3
+  cut_trans$dist.Hel.int<<-cut(cut_trans$dist.Hel, seq(0, 1200, 50), labels =
                                 seq(25, 1175, 50))
   #cut_trans$week <- cut(cut_trans$date, breaks="weeks")
   #cut_trans$week <- as.Date(cut_trans$week, tz="GMT")
   
   # irgendwie so wird es funktionieren  
-  cut_trans$date<-as.character(cut_trans$date)
-  cut_trans<-cut_trans %>% arrange(desc(date))
+  cut_trans$date<<-as.character(cut_trans$date)
+  cut_trans<<-cut_trans %>% arrange(desc(date))
   
   t5<-cut_trans %>% 
     group_by(date) %>% 
@@ -1267,38 +1269,29 @@ output$trans_o2 <- renderPlotly({
   
   # 04f: download CSV ------------------------------------------------
   #https://shiny.rstudio.com/articles/download.html  
-  # cut_hov<<-Sub_pCO2
-  # cut_hov$dist.Hel<<-distGeo(cbind(cut_hov$Lon, cut_hov$Lat), Hel)/1e3
-  # cut_hov$dist.Hel.int<<-cut(cut_hov$dist.Hel, seq(0, 1200, 50), labels =
-  #                              seq(25, 1175, 50))
-  # 
-  # cut_hov$week <<- cut(cut_hov$date, breaks="weeks")
-  # cut_hov$week <<- as.Date(cut_hov$week, tz="GMT")
-  # 
-  # 
-  # cut_hov_mean<<-cut_hov %>% 
-  #   dplyr::select(dist.Hel.int, week, cO2, Sal, pCO2, Tem) %>% 
-  #   group_by(dist.Hel.int, week) %>% 
-  #   summarise_all(funs(mean, "mean", mean(.,na.rm = FALSE))) %>% 
-  #   as.data.frame() 
-  # 
-  # cut_hov_mean$dist.Hel.int<<-as.numeric(as.character(cut_hov_mean$dist.Hel.int))
-  # 
-  # cut_hov_mean$week<<-as.POSIXct(cut_hov_mean$week) 
- 
-  datasetInput <- reactive({
+  
+   datasetInput <- reactive({
+  
     switch(input$dataset,
            "Time Series Data"=df.sub.pCO2,
-           "Hovmöller Data"=cut_hov_mean,
-           "Transect Data"= cut_trans
+           
+           "Transect Data"= cut_trans,
+           
+           "Hovmoeller Data"=cut_pCO2_mean
     )
-    
-  })
+    })
+
+output$datatable<- renderTable({
+  datasetInput()
+})
+
   output$downloadData <- downloadHandler(
-    filename = function()
-    {paste(input$dataset, ".csv", sep = "")},
-    content = function(file)
-    {write.csv(datasetInput(), file, row.names = FALSE)}
+    filename = function(){
+    paste(input$dataset, ".csv", sep = "")
+      },
+    content = function(file){
+    write.csv(datasetInput(), file, row.names = FALSE)
+      }
   )
   
 
