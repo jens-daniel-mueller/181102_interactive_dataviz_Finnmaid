@@ -108,19 +108,21 @@ ui <- fluidPage(
                       checkboxInput('o2_sd', 'O2 SD')
                )
              ),
+             submitButton("Apply Change"),
              img(src="finnmaid.png", width = "100%"),
              selectInput("dataset", "Choose a dataset:",
                          choices = c("Time Series Data", "Hovmoeller Data", "Transect Data")),
              downloadButton("downloadData", "Download"),
-             submitButton("Apply Change"),
+             
              offset = 1),
       # Show plots of the data
       column(8, 
           plotOutput("mapPlot"), 
-          textOutput("ValuesPerPoint"),
+         
           
           tabsetPanel(type = "tabs",
               tabPanel("Time Series",
+                       textOutput("ValuesPerPoint"),
                        plotlyOutput("plot_checkbox", inline = TRUE)
                        ),
                          tabPanel("Hovmoeller", 
@@ -333,8 +335,9 @@ server <- function(input, output) {
     
     df.sub.pCO2<<-bind_cols(df.sub.mean.pCO2,df.sub.min.max.pCO2,df.sub.sd)
     
-    p1<-plot_ly(df.sub.pCO2, name = "Mean pCO2", height = (400*(length(plotlist))), width = 800) %>% 
-      add_trace(x= ~df.sub.pCO2$date_mean, y= ~df.sub.pCO2$pCO2_mean,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+    p1<-plot_ly(df.sub.pCO2, name = "Mean pCO2") %>% #, height = (400*(length(plotlist))), width = 800) %>% 
+      add_trace(x= ~df.sub.pCO2$date_mean, y= ~df.sub.pCO2$pCO2_mean,type= 'scatter', mode= 'markers', error_y= ~list(type = "data", array=df.sub.pCO2$pCO2_sd,
+                                                                                                                      color= "grey"), hoverinfo = 'text',
                 text = ~paste('</br> Mean pCO2',
                               '</br> Date:', df.sub.pCO2$date_mean,
                               '</br> Mean: ',  round(df.sub.pCO2$pCO2_mean, digits= 2) ,
