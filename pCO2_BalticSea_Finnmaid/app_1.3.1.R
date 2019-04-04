@@ -19,7 +19,7 @@ library(geosphere)
 
 # 01: load data -- -------------------------------------------------------------
 
-#df <- data.table(read.csv("../Finnmaid_all_2003-2018.csv"))
+df <- data.table(read.csv("../Finnmaid_all_2003-2018.csv"))
 df$date<-as.Date(df$date)
 df$route<-as.character(df$route)
 x<-c(0,0)
@@ -316,18 +316,25 @@ server <- function(input, output) {
     df.sub.mean.pCO2 <- Sub_pCO2 %>% 
       group_by(ID) %>% 
       summarise_all(funs(mean, "mean", mean(., na.rm = FALSE))) %>% 
-      dplyr::select(date_mean, pCO2_mean, Tem_mean,Sal_mean,cO2_mean) #add ch4_mean here as soon as data is there
+      dplyr::select(ID,date_mean, pCO2_mean, Tem_mean,Sal_mean,cO2_mean) #add ch4_mean here as soon as data is there
     
     df.sub.min.max.pCO2 <- Sub_pCO2 %>% 
       group_by(ID) %>% 
       summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
       dplyr::select(pCO2_min, pCO2_max, Tem_min, Tem_max, Sal_min, Sal_max, cO2_min, cO2_max)#add ch4_min/max here as soon as data is there
     
-    df.sub.pCO2<<-bind_cols(df.sub.mean.pCO2,df.sub.min.max.pCO2)
+    df.sub.sd <- Sub_pCO2 %>% 
+      group_by(ID) %>% 
+      summarise_if(is.numeric, funs(sd, "sd"), na.rm = FALSE) %>% 
+      dplyr::select(pCO2_sd, Tem_sd, Sal_sd,cO2_sd)
+    
+    
+    df.sub.pCO2<<-bind_cols(df.sub.mean.pCO2,df.sub.min.max.pCO2,df.sub.sd)
     
     p1<-plot_ly(df.sub.pCO2, name = "Mean pCO2", height = (400*(length(plotlist))), width = 800) %>% 
       add_trace(x= ~df.sub.pCO2$date_mean, y= ~df.sub.pCO2$pCO2_mean,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                text = ~paste('</br> Mean pCO2',
+                              '</br> Date:', df.sub.pCO2$date_mean,
                               '</br> Mean: ',  round(df.sub.pCO2$pCO2_mean, digits= 2) ,
                               '</br> Max: ', round(df.sub.pCO2$pCO2_max, digits = 2),
                               '</br> Min: ', round(df.sub.pCO2$pCO2_min, digits = 2))) %>% 
@@ -342,7 +349,8 @@ server <- function(input, output) {
     p2<-plot_ly(df.sub.pCO2, name = "Mean Temperature", height = (400*(length(plotlist))),  width = 1200) %>% 
       
       add_trace(x= ~df.sub.pCO2$date_mean, y= ~df.sub.pCO2$Tem_mean,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                text = ~paste('</br> Mean Temp',
+                              '</br> Date', df.sub.pCO2$date_mean,
                               '</br> Mean: ',  round(df.sub.pCO2$Tem_mean, digits= 2) ,
                               '</br> Max: ', round(df.sub.pCO2$Tem_max, digits = 2),
                               '</br> Min: ', round(df.sub.pCO2$Tem_min, digits = 2))) %>% 
@@ -355,7 +363,8 @@ server <- function(input, output) {
 ### PLOT MEAN SALINITY ### 
   p3<- plot_ly(df.sub.pCO2, name = "Mean Salinity",height = (400*(length(plotlist))), width = 1200) %>% 
       add_trace(x= ~ df.sub.pCO2$date_mean, y= ~ df.sub.pCO2$Sal_mean,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                text = ~paste('</br> Mean Sal',
+                              '</br> Date', df.sub.pCO2$date_mean,
                               '</br> Mean: ',  round(df.sub.pCO2$Sal_mean, digits= 2) ,
                               '</br> Max: ', round(df.sub.pCO2$Sal_max, digits = 2),
                               '</br> Min: ', round(df.sub.pCO2$Sal_min, digits = 2))) %>% 
@@ -373,7 +382,8 @@ server <- function(input, output) {
      
      p5<- plot_ly(df.sub.pCO2, name = "Mean O2",height = (400*(length(plotlist))),  width = 1200) %>%
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$cO2_mean,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                 text = ~paste('</br> Mean O2',
+                               '</br> Date', df.sub.pCO2$date_mean,
                                '</br> Mean: ',  round(df.sub.pCO2$cO2_mean, digits= 2) ,
                                '</br> Max: ', round(df.sub.pCO2$cO2_max, digits = 2),
                                '</br> Min: ', round(df.sub.pCO2$cO2_min, digits = 2))) %>%
@@ -387,7 +397,8 @@ server <- function(input, output) {
      
      p6<- plot_ly(df.sub.pCO2, name = "Min pCO2",height = (400*(length(plotlist))),  width = 1200) %>%
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_min,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                 text = ~paste('</br> Min pCO2',
+                               '</br> Date', df.sub.pCO2$date_mean,
                                '</br> Mean: ',  round(df.sub.pCO2$pCO2_mean, digits= 2) ,
                                '</br> Max: ', round(df.sub.pCO2$pCO2_max, digits = 2),
                                '</br> Min: ', round(df.sub.pCO2$pCO2_min, digits = 2))) %>%
@@ -401,7 +412,8 @@ server <- function(input, output) {
      p7<-plot_ly(df.sub.pCO2, name = "Min Temperature",height = (400*(length(plotlist))),  width = 1200) %>%
        
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$Tem_min,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                 text = ~paste('</br> Min Temp',
+                               '</br> Date', df.sub.pCO2$date_mean,
                                '</br> Mean: ',  round(df.sub.pCO2$Tem_mean, digits= 2) ,
                                '</br> Max: ', round(df.sub.pCO2$Tem_max, digits = 2),
                                '</br> Min: ', round(df.sub.pCO2$Tem_min, digits = 2))) %>%
@@ -415,7 +427,8 @@ server <- function(input, output) {
      
      p8<- plot_ly(df.sub.pCO2, name = "Min Salinity",height = (400*(length(plotlist))),  width = 1200) %>% 
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$Sal_min,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                 text = ~paste('</br> Min Sal',
+                               '</br> Date', df.sub.pCO2$date_mean,
                                '</br> Mean: ',  round(df.sub.pCO2$Sal_mean, digits= 2) ,
                                '</br> Max: ', round(df.sub.pCO2$Sal_max, digits = 2),
                                '</br> Min: ', round(df.sub.pCO2$Sal_min, digits = 2))) %>% 
@@ -432,7 +445,8 @@ server <- function(input, output) {
 ### PLOT MIN O2 ###
      p10<- plot_ly(df.sub.pCO2, name = "Min O2",height = (400*(length(plotlist))),  width = 1200) %>% 
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$cO2_min,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                 text = ~paste('</br> Min O2',
+                               '</br> Date', df.sub.pCO2$date_mean,
                                '</br> Mean: ',  round(df.sub.pCO2$cO2_mean, digits= 2) ,
                                '</br> Max: ', round(df.sub.pCO2$cO2_max, digits = 2),
                                '</br> Min: ', round(df.sub.pCO2$cO2_min, digits = 2))) %>% 
@@ -446,7 +460,8 @@ server <- function(input, output) {
      
      p11<- plot_ly(df.sub.pCO2, name = "Max pCO2" ,height = (400*(length(plotlist))),  width = 1200) %>% 
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                 text = ~paste('</br> Max pCO2',
+                               '</br> Date', df.sub.pCO2$date_mean,
                                '</br> Mean: ',  round(df.sub.pCO2$pCO2_mean, digits= 2) ,
                                '</br> Max: ', round(df.sub.pCO2$pCO2_max, digits = 2),
                                '</br> Min: ', round(df.sub.pCO2$pCO2_min, digits = 2))) %>% 
@@ -461,7 +476,8 @@ server <- function(input, output) {
      p12<-plot_ly(df.sub.pCO2, name = "Max Temperature" ,height = (400*(length(plotlist))),  width = 1200) %>% 
        
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$Tem_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                 text = ~paste('</br> Max Temp',
+                               '</br> Date', df.sub.pCO2$date_mean,
                                '</br> Mean: ',  round(df.sub.pCO2$Tem_mean, digits= 2) ,
                                '</br> Max: ', round(df.sub.pCO2$Tem_max, digits = 2),
                                '</br> Min: ', round(df.sub.pCO2$Tem_min, digits = 2))) %>% 
@@ -474,7 +490,8 @@ server <- function(input, output) {
 ### PLOT MAX SALINITY ###
      p13<- plot_ly(df.sub.pCO2, name = "Max Salinity" ,height = (400*(length(plotlist))),  width = 1200) %>% 
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$Sal_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                 text = ~paste('</br> Max Sal',
+                               '</br> Date', df.sub.pCO2$date_mean,
                                '</br> Mean: ',  round(df.sub.pCO2$Sal_mean, digits= 2) ,
                                '</br> Max: ', round(df.sub.pCO2$Sal_max, digits = 2),
                                '</br> Min: ', round(df.sub.pCO2$Sal_min, digits = 2))) %>% 
@@ -492,7 +509,8 @@ server <- function(input, output) {
      
      p15<- plot_ly(df.sub.pCO2, name = "Max O2" ,height = (400*(length(plotlist))),  width = 1200) %>% 
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$cO2_max,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+                 text = ~paste('</br> Max O2',
+                               '</br> Date', df.sub.pCO2$date_mean,
                                '</br> Mean: ',  round(df.sub.pCO2$cO2_mean, digits= 2) ,
                                '</br> Max: ', round(df.sub.pCO2$cO2_max, digits = 2),
                                '</br> Min: ', round(df.sub.pCO2$cO2_min, digits = 2))) %>% 
@@ -505,8 +523,9 @@ server <- function(input, output) {
 ### PLOT SD pCO2 ###
      
      p16<- plot_ly(df.sub.pCO2, name = "SD pCO2" ,height = (400*(length(plotlist))),  width = 1200) %>%
-       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_sd,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$pCO2_sd,type= 'scatter', mode= 'line',  hoverinfo = 'text',
+                 text = ~paste('</br> SD pCO2',
+                               '</br> Date', df.sub.pCO2$date_mean,
                                '</br> Mean: ',  round(df.sub.pCO2$pCO2_mean, digits= 2) ,
                                '</br> Max: ', round(df.sub.pCO2$pCO2_max, digits = 2),
                                '</br> Min: ', round(df.sub.pCO2$pCO2_min, digits = 2))) %>%
@@ -520,8 +539,9 @@ server <- function(input, output) {
      
      p17<-plot_ly(df.sub.pCO2, name = "SD Temperature" ,height = (400*(length(plotlist))),  width = 1200) %>% 
        
-       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$Tem_sd,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$Tem_sd,type= 'scatter', mode= 'line',  hoverinfo = 'text',
+                 text = ~paste('</br> SD Temp',
+                               '</br> Date', df.sub.pCO2$date_mean,
                                '</br> Mean: ',  round(df.sub.pCO2$Tem_mean, digits= 2) ,
                                '</br> Max: ', round(df.sub.pCO2$Tem_max, digits = 2),
                                '</br> Min: ', round(df.sub.pCO2$Tem_min, digits = 2))) %>% 
@@ -534,8 +554,9 @@ server <- function(input, output) {
 ### PLOT SD SALINITY ###
      
       p18<- plot_ly(df.sub.pCO2, name = "SD Salinity" ,height = (400*(length(plotlist))),  width = 1200) %>% 
-       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$Sal_sd,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                 text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$Sal_sd,type= 'scatter', mode= 'line',  hoverinfo = 'text',
+                 text = ~paste('</br> SD Sal',
+                               '</br> Date', df.sub.pCO2$date_mean,
                                '</br> Mean: ',  round(df.sub.pCO2$Sal_mean, digits= 2) ,
                                '</br> Max: ', round(df.sub.pCO2$Sal_max, digits = 2),
                                '</br> Min: ', round(df.sub.pCO2$Sal_min, digits = 2))) %>% 
@@ -550,8 +571,9 @@ server <- function(input, output) {
       
 ### PLOT SD O2 ###
       p20<- plot_ly(df.sub.pCO2, name = "SD O2" ,height = (400*(length(plotlist))),  width = 1200) %>% 
-        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$cO2_sd,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
-                  text = ~paste('</br> Date', df.sub.pCO2$date_mean,
+        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$cO2_sd,type= 'scatter', mode= 'line',  hoverinfo = 'text',
+                  text = ~paste('</br> SD O2',
+                                '</br> Date', df.sub.pCO2$date_mean,
                                 '</br> Mean: ',  round(df.sub.pCO2$cO2_mean, digits= 2) ,
                                 '</br> Max: ', round(df.sub.pCO2$cO2_max, digits = 2),
                                 '</br> Min: ', round(df.sub.pCO2$cO2_min, digits = 2))) %>% 
@@ -1244,6 +1266,7 @@ output$trans_o2 <- renderPlotly({
   
   
   # 04f: download CSV ------------------------------------------------
+  #https://shiny.rstudio.com/articles/download.html  
   # cut_hov<<-Sub_pCO2
   # cut_hov$dist.Hel<<-distGeo(cbind(cut_hov$Lon, cut_hov$Lat), Hel)/1e3
   # cut_hov$dist.Hel.int<<-cut(cut_hov$dist.Hel, seq(0, 1200, 50), labels =
@@ -1263,11 +1286,11 @@ output$trans_o2 <- renderPlotly({
   # 
   # cut_hov_mean$week<<-as.POSIXct(cut_hov_mean$week) 
  
-  datasetInput <<- reactive({
+  datasetInput <- reactive({
     switch(input$dataset,
            "Time Series Data"=df.sub.pCO2,
-           "Hovmöller Data" =cut_hov_mean,
-           "Transect Data" = cut_trans
+           "Hovmöller Data"=cut_hov_mean,
+           "Transect Data"= cut_trans
     )
     
   })
@@ -1275,7 +1298,7 @@ output$trans_o2 <- renderPlotly({
     filename = function()
     {paste(input$dataset, ".csv", sep = "")},
     content = function(file)
-    {write.csv(datasetInput(), file, filename, row.names = FALSE)}
+    {write.csv(datasetInput(), file, row.names = FALSE)}
   )
   
 
