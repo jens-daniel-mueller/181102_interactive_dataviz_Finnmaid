@@ -9,22 +9,28 @@
 library(shiny)
 library(data.table)
 library(ggplot2)
+library(ggmap)
+
 library(maps)
+library(mapdata)
 library(plotly)
+library(viridis)
 library(base)
+library(geosphere)
+
 library(plyr)
 library(dplyr)
-library(geosphere)
 
 
 # 01: load data -- -------------------------------------------------------------
 
-df <- data.table(read.csv("../Finnmaid_all_2003-2018.csv"))
+#df <- data.table(read.csv("../Finnmaid_all_2003-2018.csv"))
 df$date<-as.Date(df$date)
 df$route<-as.character(df$route)
 x<-c(0,0)
 Hel <- c(24.945831, 60.192059)
 # 02: map attributes  -----------------------------------------------------------
+#baltic.coastlines<-maps::map(database = "world")#, xlim = c(4, 29), ylim = c(50, 66))
 baltic.coastlines <- ggplot2::map_data('world')#, xlim = c(4, 29), ylim = c(50, 66))
 land.colour   <- "grey75"
 border.colour <- "grey10"
@@ -67,48 +73,49 @@ ui <- fluidPage(
                max= as.Date("2018-07-16 05:10:55"),
                format= "yyyy/mm/dd",
                separator="to"),
-             checkboxInput("routeall", "all routes", value = TRUE),
-             checkboxInput("routeE", "route E"),
-             checkboxInput("routeW", "route W"),
-             checkboxInput("routeG", "route G"),
-             checkboxInput("routeP", "route P"),
-             checkboxInput("routeS", "route S"),
+             checkboxInput("routeE", "route E", value = TRUE),
+             checkboxInput("routeW", "route W", value = TRUE),
+             checkboxInput("routeG", "route G", value = TRUE),
+             checkboxInput("routeP", "route P", value = TRUE),
+             checkboxInput("routeS", "route S", value = TRUE),
              numericInput("lon_low", label = "Lower Longitude Limit[decimal degrees]",min= 10, max = 30, value = 19.5),
              numericInput("lon_high", "High Longitude Limit[decimal degrees]:",min= 10, max = 30, value = 21),
              numericInput("lat_low", label = "Lower Lattitude Limit[decimal degrees]",min= 53, max = 60, value = 57.5),
              numericInput("lat_high", "High Lattitude Limit[decimal degrees]:",min= 53, max= 60, value=59),
              
-             fluidRow(
-               column(3,
-                      checkboxInput('pCO2_mean', 'pCO2 Mean', value = TRUE),
-                      checkboxInput('temp_mean', 'Temp Mean', value = TRUE),
-                      checkboxInput('sal_mean', 'Sal Mean', value = TRUE),
-                      checkboxInput('ch4_mean', ' CH4 Mean'),
-                      checkboxInput('o2_mean', 'O2 Mean')
-               ),
-               column(3,
-                      checkboxInput('pCO2_min', 'pCO2 Min'),
-                      checkboxInput('temp_min', 'Temp Min'),
-                      checkboxInput('sal_min', 'Sal Min'),
-                      checkboxInput('ch4_min', ' CH4 Min'),
-                      checkboxInput('o2_min', 'O2 Min')
-               ),
-               column(3,
-                      checkboxInput('pCO2_max', 'pCO2 Max'),
-                      checkboxInput('temp_max', 'Temp Max'),
-                      checkboxInput('sal_max', 'Sal Max'),
-                      checkboxInput('ch4_max', ' CH4 Max'),
-                      checkboxInput('o2_max', 'O2 Max')
-               ),
-               column(3,
-                      checkboxInput('pCO2_sd', 'pCO2 SD'),
-                      checkboxInput('temp_sd', 'Temp SD'),
-                      checkboxInput('sal_sd', 'Sal SD'),
-                      checkboxInput('ch4_sd', ' CH4 SD'),
-                      checkboxInput('o2_sd', 'O2 SD')
-               )
-             ),
+           
+             # fluidRow(
+             #   column(3,
+             #          checkboxInput('pCO2_mean', 'pCO2 Mean', value = TRUE),
+             #          checkboxInput('temp_mean', 'Temp Mean', value = TRUE),
+             #          checkboxInput('sal_mean', 'Sal Mean', value = TRUE),
+             #          checkboxInput('ch4_mean', ' CH4 Mean'),
+             #          checkboxInput('o2_mean', 'O2 Mean')
+             #   ),
+             #   column(3,
+             #          checkboxInput('pCO2_min', 'pCO2 Min'),
+             #          checkboxInput('temp_min', 'Temp Min'),
+             #          checkboxInput('sal_min', 'Sal Min'),
+             #          checkboxInput('ch4_min', ' CH4 Min'),
+             #          checkboxInput('o2_min', 'O2 Min')
+             #   ),
+             #   column(3,
+             #          checkboxInput('pCO2_max', 'pCO2 Max'),
+             #          checkboxInput('temp_max', 'Temp Max'),
+             #          checkboxInput('sal_max', 'Sal Max'),
+             #          checkboxInput('ch4_max', ' CH4 Max'),
+             #          checkboxInput('o2_max', 'O2 Max')
+             #   ),
+             #   column(3,
+             #          checkboxInput('pCO2_sd', 'pCO2 SD'),
+             #          checkboxInput('temp_sd', 'Temp SD'),
+             #          checkboxInput('sal_sd', 'Sal SD'),
+             #          checkboxInput('ch4_sd', ' CH4 SD'),
+             #          checkboxInput('o2_sd', 'O2 SD')
+             #   )
+             # ),
              submitButton("Apply Change"),
+             img(src="blank_space.png", width = "100%"),
              img(src="finnmaid.png", width = "100%"),
              selectInput("dataset", "Choose a dataset:",
                          choices = c("Time Series Data", "Hovmoeller Data", "Transect Data")),
@@ -123,10 +130,9 @@ ui <- fluidPage(
           tabsetPanel(type = "tabs",
               tabPanel("Time Series",
                        textOutput("ValuesPerPoint"),
-                       plotlyOutput("plot_checkbox", inline = TRUE)
+                       plotlyOutput("plot_timeseries", inline = TRUE)
                        ),
                          tabPanel("Hovmoeller", 
-                                  textOutput("restrictions"),
                                   plotOutput("hov_pCO2_mean"),
                                   plotOutput("hov_temp_mean"),
                                   plotOutput("hov_sal_mean"),
@@ -150,14 +156,15 @@ ui <- fluidPage(
 # Define server logic required to draw mapPlot and scatterPlot for mainpanel
 server <- function(input, output) {
   
+  
   # 04a: Output Values per point ------------------------------------------------  
   output$ValuesPerPoint <- renderText({
-    if(input$routeall == TRUE)
-      Sub <<- df %>% 
-        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    # if(input$routeall == TRUE)
+    #   Sub <<- df %>% 
+    #     filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+    #              Lon >= input$lon_low & Lon <= input$lon_high &
+    #              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+    #     dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
     if (input$routeE == TRUE)
       Sub <<- df %>% 
         filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
@@ -202,28 +209,28 @@ server <- function(input, output) {
   # 04b: Output Map Plot ------------------------------------------------ 
   
   output$mapPlot <- renderPlot({
-    if (input$routeall == TRUE)
-      
-      (p<-ggplot() +
-         coord_quickmap(xlim=c(xmin, xmax), ylim=c(ymin, ymax)) +
-         geom_polygon(data=basemap, aes(x=long, y=lat, group=group), fill=land.colour, colour = border.colour, lwd=.5)+
-         scale_color_discrete(name = "Routes", labels = c("route E", "route W", "route G", "route P", "route S"))+
-         #geom_rect(data=data.frame(),mapping = aes(xmin= 15, xmax = 20, ymin=55, ymax=60), fill= "blue", alpha = 0.2
-         #)+
-         geom_rect(data=data.frame(),mapping = aes(xmin= input$lon_low, xmax = input$lon_high, ymin=input$lat_low, ymax= input$lat_high), fill= "blue", alpha = 0.2
-         )+
-         labs(x="Longitude (°E)", y="Latitude (°N)", size = 2)+
-         theme_minimal()+
-         geom_path(data= routeE,aes(x= routeE$Lon, y= routeE$Lat, color = "route E"))+
-         geom_path(data= routeW,aes(x= routeW$Lon, y= routeW$Lat, color = "route W")) +
-         geom_path(data= routeG,aes(x= routeG$Lon, y= routeG$Lat, color = "route G"))+
-         geom_path(data= routeP,aes(x= routeP$Lon, y= routeP$Lat, color ="route P"))+
-         geom_path(data= routeS,aes(x= routeS$Lon, y= routeS$Lat, color = "route S"))) else
-         {NULL}
-    
-    if (input$routeall == TRUE)
-      (plot(p)) else
-      {NULL}
+    # if (input$routeall == TRUE)
+    #   
+    #   (p<-ggplot() +
+    #      coord_quickmap(xlim=c(xmin, xmax), ylim=c(ymin, ymax)) +
+    #      geom_polygon(data=basemap, aes(x=long, y=lat, group=group), fill=land.colour, colour = border.colour, lwd=.5)+
+    #      scale_color_discrete(name = "Routes", labels = c("route E", "route W", "route G", "route P", "route S"))+
+    #      #geom_rect(data=data.frame(),mapping = aes(xmin= 15, xmax = 20, ymin=55, ymax=60), fill= "blue", alpha = 0.2
+    #      #)+
+    #      geom_rect(data=data.frame(),mapping = aes(xmin= input$lon_low, xmax = input$lon_high, ymin=input$lat_low, ymax= input$lat_high), fill= "blue", alpha = 0.2
+    #      )+
+    #      labs(x="Longitude (°E)", y="Latitude (°N)", size = 2)+
+    #      theme_minimal()+
+    #      geom_path(data= routeE,aes(x= routeE$Lon, y= routeE$Lat, color = "route E"))+
+    #      geom_path(data= routeW,aes(x= routeW$Lon, y= routeW$Lat, color = "route W")) +
+    #      geom_path(data= routeG,aes(x= routeG$Lon, y= routeG$Lat, color = "route G"))+
+    #      geom_path(data= routeP,aes(x= routeP$Lon, y= routeP$Lat, color ="route P"))+
+    #      geom_path(data= routeS,aes(x= routeS$Lon, y= routeS$Lat, color = "route S"))) else
+    #      {NULL}
+    # 
+    # if (input$routeall == TRUE)
+    #   (plot(p)) else
+    #   {NULL}
     
     
     if (input$routeE == TRUE)
@@ -253,9 +260,10 @@ server <- function(input, output) {
       (p<-p+
          geom_path(data= routeS,aes(x= routeS$Lon, y= routeS$Lat, colour = "route S")))
     
-    if(input$routeall == FALSE)
-      (plot(p)) else
-      {NULL}
+    p
+    # if(input$routeall == FALSE)
+    #   (plot(p)) else
+    #   {NULL}
   })
   # 04b: Output Checkbox Plots ------------------------------------------------
   # 04b1: Axis Labels ------------------------------------------------
@@ -269,24 +277,25 @@ server <- function(input, output) {
     title = "Temperature [°C]",
     showticklabels = TRUE)
   d<- list(
-    title = "Salinity",
+    title = "Salinity[‰]",
     showticklabels = TRUE)
   e<-list(
     title = "CH4",
     showticklabels = TRUE)
   f<- list(
-    title= "O2",
+    title= "O2[‰]",
     showticklabels = TRUE)
-  # 04b2: Checkbox Plots -----------------------------------------------
+  h<-list("Distance to Helsinki [km]", showticklabels = TRUE)
+  # 04b2: Time Series Plots -----------------------------------------------
   # Plot Mean pCO2
-  output$plot_checkbox <- renderPlotly({
+  output$plot_timeseries <- renderPlotly({
     plotlist<- NULL
-    if(input$routeall == TRUE)
-      Sub_pCO2 <<- df %>% 
-        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,pCO2,Tem,ID,Sal,cO2) else {NULL} 
+    # if(input$routeall == TRUE)
+    #   Sub_pCO2 <<- df %>% 
+    #     filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+    #              Lon >= input$lon_low & Lon <= input$lon_high &
+    #              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+    #     dplyr::select(date,Lon,Lat,pCO2,Tem,ID,Sal,cO2) else {NULL} 
     if (input$routeE == TRUE)
       Sub_pCO2 <<- df %>% 
         filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
@@ -337,7 +346,7 @@ server <- function(input, output) {
     df.sub.pCO2<<-bind_cols(df.sub.mean.pCO2,df.sub.min.max.pCO2,df.sub.sd)
     
     p1<-plot_ly(df.sub.pCO2, name = "Mean pCO2") %>% #, height = (400*(length(plotlist))), width = 800) %>% 
-      add_trace(x= ~df.sub.pCO2$date_mean, y= ~df.sub.pCO2$pCO2_mean,type= 'scatter', mode= 'markers', error_y= ~list(type = "data", array=df.sub.pCO2$pCO2_sd,
+      add_trace(x= ~df.sub.pCO2$date_mean, y= ~df.sub.pCO2$pCO2_mean,type= 'scatter', mode= 'markers', marker = list(symbol= "circle", size= 3), error_y= ~list(type = "data", array=df.sub.pCO2$pCO2_sd,
                                                                                                                       color= "grey"), hoverinfo = 'text',
                 text = ~paste('</br> Mean pCO2',
                               '</br> Date:', df.sub.pCO2$date_mean,
@@ -351,7 +360,8 @@ server <- function(input, output) {
     
     p2<-plot_ly(df.sub.pCO2, name = "Mean Temperature", height = (400*4),  width = 1200) %>% 
       
-      add_trace(x= ~df.sub.pCO2$date_mean, y= ~df.sub.pCO2$Tem_mean,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+      add_trace(x= ~df.sub.pCO2$date_mean, y= ~df.sub.pCO2$Tem_mean,type= 'scatter', mode= 'markers', marker = list(symbol= "circle", size= 3), error_y= ~list(type = "data", array=df.sub.pCO2$Tem_sd,
+                                                                                                                                                                color= "grey"),  hoverinfo = 'text',
                 text = ~paste('</br> Mean Temp',
                               '</br> Date', df.sub.pCO2$date_mean,
                               '</br> Mean: ',  round(df.sub.pCO2$Tem_mean, digits= 2) ,
@@ -362,7 +372,8 @@ server <- function(input, output) {
     
 ### PLOT MEAN SALINITY ### 
   p3<- plot_ly(df.sub.pCO2, name = "Mean Salinity",height = (400*4), width = 1200) %>% 
-      add_trace(x= ~ df.sub.pCO2$date_mean, y= ~ df.sub.pCO2$Sal_mean,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+      add_trace(x= ~ df.sub.pCO2$date_mean, y= ~ df.sub.pCO2$Sal_mean,type= 'scatter', mode= 'markers', marker = list(symbol= "circle", size= 3), error_y= ~list(type = "data", array=df.sub.pCO2$Sal_sd,
+                                                                                                                                                                  color= "grey"),  hoverinfo = 'text',
                 text = ~paste('</br> Mean Sal',
                               '</br> Date', df.sub.pCO2$date_mean,
                               '</br> Mean: ',  round(df.sub.pCO2$Sal_mean, digits= 2) ,
@@ -378,7 +389,8 @@ server <- function(input, output) {
 ### PLOT MEAN O2
      
      p5<- plot_ly(df.sub.pCO2, name = "Mean O2",height = (400*4),  width = 1200) %>%
-       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$cO2_mean,type= 'scatter', mode= 'markers',  hoverinfo = 'text',
+       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$cO2_mean,type= 'scatter', mode= 'markers', marker = list(symbol= "circle", size= 3), error_y= ~list(type = "data", array=df.sub.pCO2$cO2_sd,
+                                                                                                                                                              color= "grey"),  hoverinfo = 'text',
                  text = ~paste('</br> Mean O2',
                                '</br> Date', df.sub.pCO2$date_mean,
                                '</br> Mean: ',  round(df.sub.pCO2$cO2_mean, digits= 2) ,
@@ -392,18 +404,18 @@ server <- function(input, output) {
     subplot(plotlist, nrows= length(plotlist), shareX = TRUE, titleY = TRUE, titleX = TRUE)
   })
  
-  # 04d: CheckboxPlots, Hovmoeller ------------------------------------
+  # 04d: Hovmoeller Plots ------------------------------------
 #Hovmoeller Plot pCO2 Mean
   
   output$hov_pCO2_mean <- renderPlot({
     
   
-    if(input$routeall == TRUE)
-    Sub_pCO2 <<- df %>% 
-    filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-             Lon >= input$lon_low & Lon <= input$lon_high &
-             Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-    dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    # if(input$routeall == TRUE)
+    # Sub_pCO2 <<- df %>% 
+    # filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+    #          Lon >= input$lon_low & Lon <= input$lon_high &
+    #          Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+    # dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
   if (input$routeE == TRUE)
     Sub_pCO2 <<- df %>% 
     filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
@@ -476,10 +488,10 @@ server <- function(input, output) {
     #scale_color_brewer(palette="Set1", name="pCO2 (µatm)")+
      #                    (name=expression("pCO2[µatm]")+
       #                   limits=c(100, 600))+
-    scale_x_datetime(breaks= "1 year", date_labels = "%Y")+
+    scale_x_datetime(date_breaks= "1 year", date_labels = "%Y")+
     #scale_x_datetime(breaks = seq(as.POSIXct("2004/1/1", tz="GMT"), as.POSIXct("2016/1/1", tz="GMT"), "2 years"),
      #                expand = c(0,0))+
-    scale_y_continuous(breaks = seq(55, 60, 2))+
+    scale_y_continuous(breaks = seq(0, 1000, 50))+
     labs(y="Distance to Helsinki [km])")+
     theme(
       axis.title.x = element_blank(),
@@ -488,23 +500,24 @@ server <- function(input, output) {
       legend.key.height = unit(0.3, "cm")
     )
   
+  hov1
   
-  
-  if (input$pCO2_mean == TRUE)
-    (hov1) else
-    {NULL}
+  #if (input$pCO2_mean == TRUE)
+  #  (hov1) else
+  #  {NULL}
   
   })
 #Hovmoeller Plot Temperatur Mean
   output$hov_temp_mean <- renderPlot({
     
     
-    if(input$routeall == TRUE)
-      Sub_pCO2 <<- df %>% 
-        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    # if(input$routeall == TRUE)
+    #   Sub_pCO2 <<- df %>% 
+    #     filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+    #              Lon >= input$lon_low & Lon <= input$lon_high &
+    #              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+    #     dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
+    
     if (input$routeE == TRUE)
       Sub_pCO2 <<- df %>% 
         filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
@@ -513,28 +526,28 @@ server <- function(input, output) {
         dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
     if (input$routeW == TRUE)
       Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
-                          filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
+                          dplyr::filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
                                    Lon >= input$lon_low & Lon <= input$lon_high &
                                    Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
                           dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
     if(input$routeS == TRUE)
       Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
-                          filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
+                          dplyr::filter(route == "S", date >=input$daterange[1] & date <=input$daterange[2] & 
                                    Lon >= input$lon_low & Lon <= input$lon_high &
                                    Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
                           dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
     if(input$routeP == TRUE)
       Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
-                          filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
+                          dplyr::filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
                                    Lon >= input$lon_low & Lon <= input$lon_high &
                                    Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
                           dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
     if(input$routeG == TRUE)
       Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
-                          filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
+                          dplyr::filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
                                    Lon >= input$lon_low & Lon <= input$lon_high &
                                    Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,Sal,cO2,ID)) else {NULL}
+                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
     
     
     
@@ -577,10 +590,10 @@ server <- function(input, output) {
       #scale_color_brewer(palette="Set1", name="pCO2 (µatm)")+
       #                    (name=expression("pCO2[µatm]")+
       #                   limits=c(100, 600))+
-      scale_x_datetime(breaks= "1 year", date_labels = "%Y")+
+      scale_x_datetime(date_breaks= "1 year", date_labels = "%Y")+
       #scale_x_datetime(breaks = seq(as.POSIXct("2004/1/1", tz="GMT"), as.POSIXct("2016/1/1", tz="GMT"), "2 years"),
       #                expand = c(0,0))+
-      scale_y_continuous(breaks = seq(55, 60, 2))+
+      scale_y_continuous(breaks = seq(0, 1000, 50))+
       labs(y="Distance to Helsinki [km])")+
       theme(
         axis.title.x = element_blank(),
@@ -590,10 +603,11 @@ server <- function(input, output) {
       )
     
     
+    hov2
     
-    if (input$temp_mean == TRUE)
-      (hov2) else
-      {NULL}
+    #if (input$temp_mean == TRUE)
+    #  (hov2) else
+    #  {NULL}
     
   })
   
@@ -602,12 +616,12 @@ server <- function(input, output) {
   output$hov_sal_mean <- renderPlot({
     
     
-    if(input$routeall == TRUE)
-      Sub_pCO2 <- df %>% 
-        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,ID, Sal) else {NULL} 
+    # if(input$routeall == TRUE)
+    #   Sub_pCO2 <- df %>% 
+    #     filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+    #              Lon >= input$lon_low & Lon <= input$lon_high &
+    #              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+    #     dplyr::select(date,Lon,Lat,ID, Sal) else {NULL} 
     if (input$routeE == TRUE)
       Sub_pCO2 <- df %>% 
         filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
@@ -680,10 +694,10 @@ server <- function(input, output) {
       #scale_color_brewer(palette="Set1", name="pCO2 (µatm)")+
       #                    (name=expression("pCO2[µatm]")+
       #                   limits=c(100, 600))+
-      scale_x_datetime(breaks= "1 year", date_labels = "%Y")+
+      scale_x_datetime(date_breaks= "1 year", date_labels = "%Y")+
       #scale_x_datetime(breaks = seq(as.POSIXct("2004/1/1", tz="GMT"), as.POSIXct("2016/1/1", tz="GMT"), "2 years"),
       #                expand = c(0,0))+
-      scale_y_continuous(breaks = seq(0, 600, 50))+
+      scale_y_continuous(breaks = seq(0, 1000, 50))+
       labs(y="Distance to Helsinki [km])")+
       theme(
         axis.title.x = element_blank(),
@@ -693,10 +707,10 @@ server <- function(input, output) {
       )
     
     
-    
-    if (input$sal_mean == TRUE)
-      (hov3) else
-      {NULL}
+    hov3
+    #if (input$sal_mean == TRUE)
+    #  (hov3) else
+    #  {NULL}
     
   })
   
@@ -710,12 +724,12 @@ server <- function(input, output) {
   output$hov_o2_mean <- renderPlot({
     
     
-    if(input$routeall == TRUE)
-      Sub_pCO2 <<- df %>% 
-        filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,pCO2,Tem,ID,cO2, Sal) else {NULL} 
+    # if(input$routeall == TRUE)
+    #   Sub_pCO2 <<- df %>% 
+    #     filter(date >=input$daterange[1] & date <=input$daterange[2] & 
+    #              Lon >= input$lon_low & Lon <= input$lon_high &
+    #              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+    #     dplyr::select(date,Lon,Lat,pCO2,Tem,ID,cO2, Sal) else {NULL} 
     if (input$routeE == TRUE)
       Sub_pCO2 <<- df %>% 
         filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
@@ -786,10 +800,10 @@ server <- function(input, output) {
       #scale_color_brewer(palette="Set1", name="pCO2 (µatm)")+
       #                    (name=expression("pCO2[µatm]")+
       #                   limits=c(100, 600))+
-      scale_x_datetime(breaks= "1 year", date_labels = "%Y")+
+      scale_x_datetime(date_breaks= "1 year", date_labels = "%Y")+
       #scale_x_datetime(breaks = seq(as.POSIXct("2004/1/1", tz="GMT"), as.POSIXct("2016/1/1", tz="GMT"), "2 years"),
       #                expand = c(0,0))+
-      scale_y_continuous(breaks = seq(55, 60, 2))+
+      scale_y_continuous(breaks = seq(0, 1000, 50))+
       labs(y="Distance to Helsinki [km])")+
       theme(
         axis.title.x = element_blank(),
@@ -799,31 +813,24 @@ server <- function(input, output) {
       )
     
     
-    
-    if (input$o2_mean == TRUE)
-      (hov4) else
-      {NULL}
+    hov4
+    # if (input$o2_mean == TRUE)
+    #   (hov4) else
+    #   {NULL}
     
   }) 
   
-  
-  
-  # 04e: Textoutput Hovmoeller, restrictions
-  
-  output$restrictions <-renderText({
-    paste("For Hovmoeller Plots only the options 'pCO2 mean', 'temp mean', 'Sal mean', 'CH4 mean' and ' O2 mean' are available.")
-  })
   # 04e: Transect Plots -------------------------------------------------- 
 
 ### Transect Plot pCO2 ###
   output$trans_pCO2 <- renderPlotly({
-    
-    if(input$routeall == TRUE)
-    trans_sub <<- df %>% 
-        filter(date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,pCO2, Lat, Sal, Tem, cO2) else {NULL} 
+    # 
+    # if(input$routeall == TRUE)
+    # trans_sub <<- df %>% 
+    #     filter(date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
+    #              Lon >= input$lon_low & Lon <= input$lon_high &
+    #              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+    #     dplyr::select(date,Lon,pCO2, Lat, Sal, Tem, cO2) else {NULL} 
     if (input$routeE == TRUE)
       trans_sub <- df %>% 
         filter(route == "E", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
@@ -870,23 +877,26 @@ server <- function(input, output) {
         group_by(date) %>% 
         ggplot(aes(x= dist.Hel, y= pCO2, color = date))+
         geom_line()+
-        scale_color_brewer(palette="RdGy", direction = -1)
+        scale_color_brewer(palette="RdGy", direction = -1)+
+      ylab("pCO2[µatm]")+
+      xlab("Distance to Helsinki [km]")
     
-    if (input$pCO2_mean == TRUE)
-      (t1) else
-      {NULL}
+    t1
+    # if (input$pCO2_mean == TRUE)
+    #   (t1) else
+    #   {NULL}
   })
     
 ### Transect Plot Temperature ###
     
 output$trans_temp <- renderPlotly({
       
-      if(input$routeall == TRUE)
-        trans_sub <<- df %>% 
-          filter(date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-                   Lon >= input$lon_low & Lon <= input$lon_high &
-                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-          dplyr::select(date,Lon,pCO2, Lat, Sal, Tem, cO2) else {NULL} 
+      # if(input$routeall == TRUE)
+      #   trans_sub <<- df %>% 
+      #     filter(date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
+      #              Lon >= input$lon_low & Lon <= input$lon_high &
+      #              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+      #     dplyr::select(date,Lon,pCO2, Lat, Sal, Tem, cO2) else {NULL} 
       if (input$routeE == TRUE)
         trans_sub <- df %>% 
           filter(route == "E", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
@@ -933,11 +943,15 @@ output$trans_temp <- renderPlotly({
         group_by(date) %>% 
         ggplot(aes(x= dist.Hel, y= Tem, color = date))+
         geom_line()+
-        scale_color_brewer(palette="RdGy", direction = -1)
+        scale_color_brewer(palette="RdGy", direction = -1)+
+        ylab("Temperature [°C]")+
+        xlab("Distance to Helsinki [km]")
       
-      if (input$temp_mean == TRUE)
-        (t2) else
-        {NULL}
+      t2
+      
+      # if (input$temp_mean == TRUE)
+      #   (t2) else
+      #   {NULL}
       
     })
     
@@ -946,12 +960,12 @@ output$trans_temp <- renderPlotly({
     
 output$trans_sal <- renderPlotly({
         
-        if(input$routeall == TRUE)
-          trans_sub <<- df %>% 
-            filter(date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-                     Lon >= input$lon_low & Lon <= input$lon_high &
-                     Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-            dplyr::select(date,Lon,pCO2, Lat, Sal, Tem, cO2) else {NULL} 
+        # if(input$routeall == TRUE)
+        #   trans_sub <<- df %>% 
+        #     filter(date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
+        #              Lon >= input$lon_low & Lon <= input$lon_high &
+        #              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+        #     dplyr::select(date,Lon,pCO2, Lat, Sal, Tem, cO2) else {NULL} 
         if (input$routeE == TRUE)
           trans_sub <- df %>% 
             filter(route == "E", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
@@ -998,23 +1012,27 @@ output$trans_sal <- renderPlotly({
           group_by(date) %>% 
           ggplot(aes(x= dist.Hel, y= Sal, color = date))+
           geom_line()+
-          scale_color_brewer(palette="RdGy", direction = -1)
+          scale_color_brewer(palette="RdGy", direction = -1)+
+          ylab("Salinity [‰]")+
+          xlab("Distance to Helsinki [km]")
         
-        if (input$sal_mean == TRUE)
-          (t3) else
-          {NULL}
+        
+        t3
+        #if (input$sal_mean == TRUE)
+        #  (t3) else
+        #  {NULL}
 })
 
 ### Transect Plot O2 ###
 
 output$trans_o2 <- renderPlotly({
   
-  if(input$routeall == TRUE)
-    trans_sub <<- df %>% 
-      filter(date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,pCO2, Lat, Sal, Tem, cO2) else {NULL} 
+  # if(input$routeall == TRUE)
+  #   trans_sub <<- df %>% 
+  #     filter(date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
+  #              Lon >= input$lon_low & Lon <= input$lon_high &
+  #              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+  #     dplyr::select(date,Lon,pCO2, Lat, Sal, Tem, cO2) else {NULL} 
   if (input$routeE == TRUE)
     trans_sub <- df %>% 
       filter(route == "E", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
@@ -1061,11 +1079,16 @@ output$trans_o2 <- renderPlotly({
     group_by(date) %>% 
     ggplot(aes(x= dist.Hel, y= cO2, color = date))+
     geom_line()+
-    scale_color_brewer(palette="RdGy", direction = -1)
+    scale_color_brewer(palette="RdGy", direction = -1)+
+    ylab("O2[‰]")+
+    xlab("Distance to Helsinki [km]")
+    
   
-  if (input$o2_mean == TRUE)
-    (t5) else
-    {NULL}
+  
+  t5
+  #if (input$o2_mean == TRUE)
+  #  (t5) else
+  #  {NULL}
 
 })
 
