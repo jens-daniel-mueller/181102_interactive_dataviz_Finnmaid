@@ -327,7 +327,7 @@ server <- function(input, output) {
     
     df.sub.pCO2<<-bind_cols(df.sub.mean.pCO2,df.sub.min.max.pCO2,df.sub.sd)
     
-    p1<-plot_ly(df.sub.pCO2, name = "Mean pCO2") %>% #, height = (400*(length(plotlist))), width = 800) %>% 
+    p1<-plot_ly(df.sub.pCO2, name = "Mean pCO2", showlegend = FALSE) %>% #, height = (400*(length(plotlist))), width = 800) %>% 
       add_trace(x= ~df.sub.pCO2$date_mean, y= ~df.sub.pCO2$pCO2_mean,type= 'scatter', mode= 'markers', marker = list(symbol= "circle", size= 3), error_y= ~list(type = "data", array=df.sub.pCO2$pCO2_sd,
                                                                                                                       color= "grey"), hoverinfo = 'text',
                 text = ~paste('</br> Mean pCO2',
@@ -340,7 +340,7 @@ server <- function(input, output) {
     
  ### PLOT MEAN Temperature ###
     
-    p2<-plot_ly(df.sub.pCO2, name = "Mean Temperature", height = (400*4),  width = 1200) %>% 
+    p2<-plot_ly(df.sub.pCO2, name = "Mean Temperature", showlegend = FALSE, height = (400*4),  width = 1200) %>% 
       
       add_trace(x= ~df.sub.pCO2$date_mean, y= ~df.sub.pCO2$Tem_mean,type= 'scatter', mode= 'markers', marker = list(symbol= "circle", size= 3), error_y= ~list(type = "data", array=df.sub.pCO2$Tem_sd,
                                                                                                                                                                 color= "grey"),  hoverinfo = 'text',
@@ -353,7 +353,7 @@ server <- function(input, output) {
     
     
 ### PLOT MEAN SALINITY ### 
-  p3<- plot_ly(df.sub.pCO2, name = "Mean Salinity",height = (400*4), width = 1200) %>% 
+  p3<- plot_ly(df.sub.pCO2, name = "Mean Salinity", showlegend = FALSE,height = (400*4), width = 1200) %>% 
       add_trace(x= ~ df.sub.pCO2$date_mean, y= ~ df.sub.pCO2$Sal_mean,type= 'scatter', mode= 'markers', marker = list(symbol= "circle", size= 3), error_y= ~list(type = "data", array=df.sub.pCO2$Sal_sd,
                                                                                                                                                                   color= "grey"),  hoverinfo = 'text',
                 text = ~paste('</br> Mean Sal',
@@ -370,7 +370,7 @@ server <- function(input, output) {
      
 ### PLOT MEAN O2
      
-     p5<- plot_ly(df.sub.pCO2, name = "Mean O2",height = (400*4),  width = 1200) %>%
+     p5<- plot_ly(df.sub.pCO2, name = "Mean O2", showlegend = FALSE,height = (400*4),  width = 1200) %>%
        add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$cO2_mean,type= 'scatter', mode= 'markers', marker = list(symbol= "circle", size= 3), error_y= ~list(type = "data", array=df.sub.pCO2$cO2_sd,
                                                                                                                                                               color= "grey"),  hoverinfo = 'text',
                  text = ~paste('</br> Mean O2',
@@ -383,7 +383,7 @@ server <- function(input, output) {
     
   plotlist<-list(p1,p2,p3,p5)
        
-    subplot(plotlist, nrows= length(plotlist), shareX = TRUE, titleY = TRUE, titleX = TRUE)
+    subplot(plotlist, nrows= length(plotlist), shareX = TRUE, titleY = TRUE)
   })
  
   # 04d: Hovmoeller Plots ------------------------------------
