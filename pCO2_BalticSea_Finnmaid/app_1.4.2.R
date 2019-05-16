@@ -192,9 +192,8 @@ server <- function(input, output) {
     
     df.sub.mean <<- Sub %>% 
       group_by(ID) %>% 
-      summarise_all(funs(mean)) %>% 
-      #summarise_all(funs(mean, "mean", mean(., na.rm = FALSE))) #%>% 
-      select(date, pCO2)
+      summarise_all(funs(mean = mean)) %>% 
+      select(date_mean, pCO2_mean)
     
     paste("One datapoint represents one crossing of the ferry 'Finnmaid'. Data gets collected every minute. Depending on your selection a different number of measurments are averaged to represent the crossing.
           The mean number of values per datapoint for your selection is", round((nrow(Sub)/nrow(df.sub.mean))), ".")
@@ -312,8 +311,8 @@ server <- function(input, output) {
     
     df.sub.mean.pCO2 <- Sub_pCO2 %>% 
       group_by(ID) %>% 
-      summarise_all(funs(mean)) %>% 
-      dplyr::select(ID,date, pCO2, Tem,Sal,cO2) #add ch4_mean here as soon as data is there
+      summarise_all(funs(mean = mean)) %>% 
+      dplyr::select(ID,date_mean, pCO2_mean, Tem_mean,Sal_mean,cO2_mean) #add ch4_mean here as soon as data is there
     
     df.sub.min.max.pCO2 <- Sub_pCO2 %>% 
       group_by(ID) %>% 
@@ -322,8 +321,8 @@ server <- function(input, output) {
     
     df.sub.sd <- Sub_pCO2 %>% 
       group_by(ID) %>% 
-      summarise_if(is.numeric, funs(sd))# %>% 
-      dplyr::select(pCO2, Tem, Sal,cO2)
+      summarise_if(is.numeric, funs(sd = sd)) %>% 
+      dplyr::select(pCO2_sd, Tem_sd, Sal_sd,cO2_sd)
     
     
     df.sub.pCO2<<-bind_cols(df.sub.mean.pCO2,df.sub.min.max.pCO2,df.sub.sd)
@@ -443,7 +442,7 @@ server <- function(input, output) {
   cut_pCO2_mean<<-cut_pCO2 %>% 
     dplyr::select(dist.Hel.int, week, pCO2) %>% 
     group_by(dist.Hel.int, week) %>% 
-    summarise_all(funs(mean, "mean", mean(.,na.rm = FALSE))) %>% 
+    summarise_all(funs(mean= mean)) %>% 
     as.data.frame() 
   
   cut_pCO2_mean$pCO2_mean<<-cut_pCO2_mean$mean
@@ -453,7 +452,7 @@ server <- function(input, output) {
   
   hov1 <-
     ggplot(data= cut_pCO2_mean)+
-    geom_raster(aes(week, dist.Hel.int, fill= pCO2_mean))+
+    geom_raster(aes(week, dist.Hel.int, fill= mean))+ #changed here: fill = pCO2_mean to mean
     scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("pCO2[µatm]"))+
    
     #until here working well and looking good
@@ -539,7 +538,8 @@ server <- function(input, output) {
     cut_temp_mean<-cut_temp %>% 
       dplyr::select(dist.Hel.int, week, Tem) %>% 
       group_by(dist.Hel.int, week) %>% 
-      summarise_all(funs(mean, "mean", mean(.,na.rm = FALSE))) %>% 
+      #changed here funs(mean = mean)
+      summarise_all(funs(mean=mean)) %>% 
       as.data.frame() 
     
     cut_temp_mean$Tem_mean<-cut_temp_mean$mean
@@ -549,7 +549,7 @@ server <- function(input, output) {
     
     hov2 <-
       ggplot(data= cut_temp_mean)+
-      geom_raster(aes(week, dist.Hel.int, fill= Tem_mean))+
+      geom_raster(aes(week, dist.Hel.int, fill= mean))+ #changed here: fill = Tem_mean to mean
       scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("Temperature [°C]"))+
       
       #until here working well and looking good
@@ -637,7 +637,7 @@ server <- function(input, output) {
     cut_sal_mean<-cut_sal %>% 
       dplyr::select(dist.Hel.int, week, Sal) %>% 
       group_by(dist.Hel.int, week) %>% 
-      summarise_all(funs(mean, "mean", mean(.,na.rm = FALSE))) %>% 
+      summarise_all(funs(mean=mean)) %>% 
       as.data.frame() 
     
     cut_sal_mean$Sal_mean<-cut_sal_mean$mean
@@ -647,7 +647,7 @@ server <- function(input, output) {
     
     hov3 <-
       ggplot(data= cut_sal_mean)+
-      geom_raster(aes(week, dist.Hel.int, fill= Sal_mean))+
+      geom_raster(aes(week, dist.Hel.int, fill= mean))+ #changed here: fill = Sal_mean to mean
       scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("Salinity[‰]"))+
       
       #until here working well and looking good
@@ -739,7 +739,7 @@ server <- function(input, output) {
     cut_o2_mean<-cut_o2 %>% 
       dplyr::select(dist.Hel.int, week, cO2) %>% 
       group_by(dist.Hel.int, week) %>% 
-      summarise_all(funs(mean, "mean", mean(.,na.rm = FALSE))) %>% 
+      summarise_all(funs(mean=mean)) %>% 
       as.data.frame() 
     
     cut_o2_mean$Sal_mean<-cut_o2_mean$mean
@@ -749,7 +749,7 @@ server <- function(input, output) {
     
     hov4 <-
       ggplot(data= cut_o2_mean)+
-      geom_raster(aes(week, dist.Hel.int, fill= Sal_mean))+
+      geom_raster(aes(week, dist.Hel.int, fill= mean))+ #changed here: fill = Tem_mean to mean
       scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("O2[‰]"))+
       #xlim(as.POSIXct("2003/1/1"), as.POSIXct("2018/1/1"))+
       geom_vline(xintercept = as.numeric(seq(as.POSIXct("2003/1/1", tz="GMT"), 
