@@ -25,10 +25,11 @@ library(dplyr)
 # 01: load data -- -------------------------------------------------------------
 
 #df <- data.table(read.csv("../Finnmaid_all_2019.csv", sep = ","))
-df$date<-as.Date(df$date)
+#df$date<-as.Date(df$date)
 df$route<-as.character(df$route)
 x<-c(0,0)
 Hel <- c(24.945831, 60.192059)
+
 # 02: map attributes  -----------------------------------------------------------
 #baltic.coastlines<-maps::map(database = "world")#, xlim = c(4, 29), ylim = c(50, 66))
 baltic.coastlines <- ggplot2::map_data('world')#, xlim = c(4, 29), ylim = c(50, 66))
@@ -46,11 +47,11 @@ ymax=61
 routeE<-df %>% 
   filter(ID == "06-06-22")
 routeW<-df %>% 
-  filter(ID == "06-07-22")
+  filter(ID == "20190312")
 routeG<-df %>% 
-  filter(ID == "20090816")
+  filter(ID == "20120727")
 routeP<-df %>% 
-  filter(ID == "20131111")
+  filter(ID == "20160328")
 
 routeall<-rbind(routeE, routeP, routeG, routeW)
 # 03: define UI --------------------------------------------------------------
@@ -58,7 +59,7 @@ ui <- fluidPage(
   fluidRow(
     column(9,
            # Application title
-           titlePanel(title=div(img(src="title.png"), " ")),
+           titlePanel(title="Baltic Sea Surface Water Observations on VOS Finnmaid"),
            offset = 3),
     fluidRow( 
       column(3, 
@@ -72,14 +73,19 @@ ui <- fluidPage(
                max= as.Date("2018-07-16 05:10:55"),
                format= "yyyy/mm/dd",
                separator="to"),
-             checkboxInput("routeE", "route E", value = TRUE),
-             checkboxInput("routeW", "route W", value = TRUE),
-             checkboxInput("routeG", "route G", value = TRUE),
-             checkboxInput("routeP", "route P", value = TRUE),
-             numericInput("lon_low", label = "Lower Longitude Limit[decimal degrees]",min= 10, max = 30, value = 19.5),
-             numericInput("lon_high", "High Longitude Limit[decimal degrees]:",min= 10, max = 30, value = 21),
-             numericInput("lat_low", label = "Lower Lattitude Limit[decimal degrees]",min= 53, max = 60, value = 57.5),
-             numericInput("lat_high", "High Lattitude Limit[decimal degrees]:",min= 53, max= 60, value=59),
+             checkboxInput("routeE", "Select route E", value = TRUE),
+             checkboxInput("routeW", "Select route W", value = TRUE),
+             checkboxInput("routeG", "Select route G", value = TRUE),
+             checkboxInput("routeP", "Select route P", value = TRUE),
+             numericInput("lat_high", "North. box limit [deg N]",
+                          min= 53, max= 60, value=59),
+             numericInput("lon_high", "East. box limit [deg E]:",
+                          min= 10, max = 30, value = 21),
+             numericInput("lat_low", label = "South. box limit [deg N]",
+                          min= 53, max = 60, value = 57.5),             
+             numericInput("lon_low", label = "West. box limit [deg E]",
+                          min= 10, max = 30, value = 19.5),
+  
              
            
              # fluidRow(
@@ -201,52 +207,33 @@ server <- function(input, output) {
   # 04b: Output Map Plot ------------------------------------------------ 
   
   output$mapPlot <- renderPlot({
-    # if (input$routeall == TRUE)
-    #   
-    #   (p<-ggplot() +
-    #      coord_quickmap(xlim=c(xmin, xmax), ylim=c(ymin, ymax)) +
-    #      geom_polygon(data=basemap, aes(x=long, y=lat, group=group), fill=land.colour, colour = border.colour, lwd=.5)+
-    #      scale_color_discrete(name = "Routes", labels = c("route E", "route W", "route G", "route P", "route S"))+
-    #      #geom_rect(data=data.frame(),mapping = aes(xmin= 15, xmax = 20, ymin=55, ymax=60), fill= "blue", alpha = 0.2
-    #      #)+
-    #      geom_rect(data=data.frame(),mapping = aes(xmin= input$lon_low, xmax = input$lon_high, ymin=input$lat_low, ymax= input$lat_high), fill= "blue", alpha = 0.2
-    #      )+
-    #      labs(x="Longitude (°E)", y="Latitude (°N)", size = 2)+
-    #      theme_minimal()+
-    #      geom_path(data= routeE,aes(x= routeE$Lon, y= routeE$Lat, color = "route E"))+
-    #      geom_path(data= routeW,aes(x= routeW$Lon, y= routeW$Lat, color = "route W")) +
-    #      geom_path(data= routeG,aes(x= routeG$Lon, y= routeG$Lat, color = "route G"))+
-    #      geom_path(data= routeP,aes(x= routeP$Lon, y= routeP$Lat, color ="route P"))+
-    #      geom_path(data= routeS,aes(x= routeS$Lon, y= routeS$Lat, color = "route S"))) else
-    #      {NULL}
-    # 
-    # if (input$routeall == TRUE)
-    #   (plot(p)) else
-    #   {NULL}
-    
+    p<-ggplot() +
+      coord_quickmap(xlim=c(xmin, xmax), ylim=c(ymin, ymax)) +
+      geom_polygon(data=basemap, aes(x=long, y=lat, group=group), fill=land.colour, colour = border.colour, lwd=.5)+
+      #geom_rect(data=data.frame(),mapping = aes(xmin= 15, xmax = 20, ymin=55, ymax= 60), fill= "blue", alpha = 0.2)+
+      geom_rect(data=data.frame(), 
+                mapping = aes(xmin= input$lon_low, xmax = input$lon_high, 
+                              ymin=input$lat_low, ymax= input$lat_high), 
+                alpha = 0.2, col="black")+
+      labs(x="Longitude [deg E]", y="Latitude [deg N]", size = 2)+
+      theme_minimal()+
+      scale_color_brewer(palette = "Set1", name="Example Routes")
     
     if (input$routeE == TRUE)
-      (p<-ggplot() +
-         coord_quickmap(xlim=c(xmin, xmax), ylim=c(ymin, ymax)) +
-         geom_polygon(data=basemap, aes(x=long, y=lat, group=group), fill=land.colour, colour = border.colour, lwd=.5)+
-         #geom_rect(data=data.frame(),mapping = aes(xmin= 15, xmax = 20, ymin=55, ymax= 60), fill= "blue", alpha = 0.2)+
-         geom_rect(data=data.frame(),mapping = aes(xmin= input$lon_low, xmax = input$lon_high, ymin=input$lat_low, ymax= input$lat_high), fill= "blue", alpha = 0.2
-         )+
-         labs(x="Longitude (°E)", y="Latitude (°N)", size = 2)+
-         theme_minimal()+
-         geom_path(data= routeE,aes(x= routeE$Lon, y= routeE$Lat, colour = "route E"))) else  {NULL}
+      (p<-p+
+         geom_path(data= routeE,aes(x= routeE$Lon, y= routeE$Lat, colour = "E"))) else  {NULL}
     
     if (input$routeW == TRUE)
       (p<-p +
-         geom_path(data= routeW,aes(x= routeW$Lon, y= routeW$Lat, colour="route W"))) else
+         geom_path(data= routeW,aes(x= routeW$Lon, y= routeW$Lat, colour="W"))) else
          {NULL}
     if (input$routeG == TRUE)
       (p<-p +
-         geom_path(data= routeG,aes(x= routeG$Lon, y= routeG$Lat, colour = "route G"))) else
+         geom_path(data= routeG,aes(x= routeG$Lon, y= routeG$Lat, colour = "G"))) else
          {NULL}
     if (input$routeP == TRUE)
       (p<- p+
-         geom_path(data= routeP,aes(x= routeP$Lon, y= routeP$Lat, colour = "route P"))) else
+         geom_path(data= routeP,aes(x= routeP$Lon, y= routeP$Lat, colour = "P"))) else
          {NULL}
     p
     # if(input$routeall == FALSE)
@@ -259,108 +246,108 @@ server <- function(input, output) {
   a <- list(title = "Date",
     showticklabels = TRUE)
   b<- list (
-    title = "pCO2[µatm]",
+    title = "pCO2 [ppm]",
     showticklabels = TRUE)
   g<- list(
-    title = "Temperature [°C]",
+    title = "Temperature [deg C]",
     showticklabels = TRUE)
   d<- list(
-    title = "Salinity[‰]",
+    title = "Salinity",
     showticklabels = TRUE)
   e<-list(
     title = "CH4",
     showticklabels = TRUE)
   f<- list(
-    title= "O2[‰]",
+    title= "O2 [umol L-1]",
     showticklabels = TRUE)
   h<-list("Distance to Helsinki [km]", showticklabels = TRUE)
   # 04b2: Time Series Plots -----------------------------------------------
   # Plot Mean pCO2
   output$plot_timeseries <- renderPlotly({
     plotlist<- NULL
-    # if(input$routeall == TRUE)
-    #   Sub_pCO2 <<- df %>% 
-    #     filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-    #              Lon >= input$lon_low & Lon <= input$lon_high &
-    #              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-    #     dplyr::select(date,Lon,Lat,pCO2,Tem,ID,Sal,cO2) else {NULL} 
-    if (input$routeE == TRUE)
-      Sub_pCO2 <<- df %>% 
-        filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal, cO2) else {NULL} 
-    if (input$routeW == TRUE)
-      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
-                          filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal, cO2)) else {NULL} 
-    if(input$routeP == TRUE)
-      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
-                          filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal, cO2)) else {NULL}
-    if(input$routeG == TRUE)
-      Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
-                          filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal, cO2)) else {NULL}
+    routelist<- as.vector(NULL)
+
     
-    df.sub.mean.pCO2 <- Sub_pCO2 %>% 
+    if (input$routeE == TRUE)
+      routelist <- c(routelist, "E") else {NULL} 
+    
+    if (input$routeW == TRUE)
+      routelist <- c(routelist, "W") else {NULL} 
+    
+    if(input$routeP == TRUE)
+      routelist <- c(routelist, "P") else {NULL}
+    
+    if(input$routeG == TRUE)
+      routelist <- c(routelist, "G") else {NULL}
+    
+    df.sub <<- df %>% 
+      filter(route %in% routelist,
+             date >=input$daterange[1] & date <=input$daterange[2] &
+               Lon >= input$lon_low & Lon <= input$lon_high &
+               Lat >=input$lat_low & Lat <= input$lat_high ) %>%
+      dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal, cO2)
+
+    df.sub.mean.pCO2 <- df.sub %>% 
       group_by(ID) %>% 
-      summarise_all(funs(mean = mean)) %>% 
+      summarise_all(funs(mean = mean), na.rm = TRUE) %>% 
       dplyr::select(ID,date_mean, pCO2_mean, Tem_mean,Sal_mean,cO2_mean) #add ch4_mean here as soon as data is there
     
-    df.sub.min.max.pCO2 <- Sub_pCO2 %>% 
+    df.sub.min.max.pCO2 <- df.sub %>% 
       group_by(ID) %>% 
-      summarise_if(is.numeric, funs(min,max), na.rm = FALSE) %>% 
+      summarise_if(is.numeric, funs(min,max), na.rm = TRUE) %>% 
       dplyr::select(pCO2_min, pCO2_max, Tem_min, Tem_max, Sal_min, Sal_max, cO2_min, cO2_max)#add ch4_min/max here as soon as data is there
     
-    df.sub.sd <- Sub_pCO2 %>% 
+    df.sub.sd <- df.sub %>% 
       group_by(ID) %>% 
       summarise_if(is.numeric, funs(sd = sd)) %>% 
       dplyr::select(pCO2_sd, Tem_sd, Sal_sd,cO2_sd)
     
     
-    df.sub.pCO2<<-bind_cols(df.sub.mean.pCO2,df.sub.min.max.pCO2,df.sub.sd)
+    df.sub<<-bind_cols(df.sub.mean.pCO2,df.sub.min.max.pCO2,df.sub.sd)
+   
     
-    p1<-plot_ly(df.sub.pCO2, name = "Mean pCO2", showlegend = FALSE) %>% #, height = (400*(length(plotlist))), width = 800) %>% 
-      add_trace(x= ~df.sub.pCO2$date_mean, y= ~df.sub.pCO2$pCO2_mean,type= 'scatter', mode= 'markers', marker = list(symbol= "circle", size= 3), error_y= ~list(type = "data", array=df.sub.pCO2$pCO2_sd,
-                                                                                                                      color= "grey"), hoverinfo = 'text',
+### PLOT MEAN pCO2 ###
+     
+    p1<-plot_ly(df.sub, name = "Mean pCO2", showlegend = FALSE) %>% #, height = (400*(length(plotlist))), width = 800) %>% 
+      add_trace(x= ~df.sub$date_mean, y= ~df.sub$pCO2_mean,type= 'scatter', 
+                mode= 'markers', marker = list(symbol= "circle", size=4, color="grey"), 
+                #error_y= ~list(type = "data", array=df.sub$pCO2_sd, color= "grey"), 
+                hoverinfo = 'text',
                 text = ~paste('</br> Mean pCO2',
-                              '</br> Date:', df.sub.pCO2$date_mean,
-                              '</br> Mean: ',  round(df.sub.pCO2$pCO2_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.pCO2$pCO2_max, digits = 2),
-                              '</br> Min: ', round(df.sub.pCO2$pCO2_min, digits = 2))) %>% 
+                              '</br> Date:', df.sub$date_mean,
+                              '</br> Mean: ',  round(df.sub$pCO2_mean, digits= 2) ,
+                              '</br> Max: ', round(df.sub$pCO2_max, digits = 2),
+                              '</br> Min: ', round(df.sub$pCO2_min, digits = 2))) %>% 
       layout( xaxis= a, yaxis = b) 
       
     
  ### PLOT MEAN Temperature ###
     
-    p2<-plot_ly(df.sub.pCO2, name = "Mean Temperature", showlegend = FALSE, height = (400*4),  width = 1200) %>% 
+    p2<-plot_ly(df.sub, name = "Mean Temperature", showlegend = FALSE, height = (400*4),  width = 1200) %>% 
       
-      add_trace(x= ~df.sub.pCO2$date_mean, y= ~df.sub.pCO2$Tem_mean,type= 'scatter', mode= 'markers', marker = list(symbol= "circle", size= 3), error_y= ~list(type = "data", array=df.sub.pCO2$Tem_sd,
-                                                                                                                                                                color= "grey"),  hoverinfo = 'text',
+      add_trace(x= ~df.sub$date_mean, y= ~df.sub$Tem_mean,type= 'scatter',
+                mode= 'markers', marker = list(symbol= "circle", size=4, color="grey"),
+                #error_y= ~list(type = "data", array=df.sub$Tem_sd,color= "grey"),
+                hoverinfo = 'text',
                 text = ~paste('</br> Mean Temp',
-                              '</br> Date', df.sub.pCO2$date_mean,
-                              '</br> Mean: ',  round(df.sub.pCO2$Tem_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.pCO2$Tem_max, digits = 2),
-                              '</br> Min: ', round(df.sub.pCO2$Tem_min, digits = 2))) %>% 
+                              '</br> Date', df.sub$date_mean,
+                              '</br> Mean: ',  round(df.sub$Tem_mean, digits= 2) ,
+                              '</br> Max: ', round(df.sub$Tem_max, digits = 2),
+                              '</br> Min: ', round(df.sub$Tem_min, digits = 2))) %>% 
       layout(xaxis = a, yaxis = g, autosize = FALSE)
     
     
 ### PLOT MEAN SALINITY ### 
-  p3<- plot_ly(df.sub.pCO2, name = "Mean Salinity", showlegend = FALSE,height = (400*4), width = 1200) %>% 
-      add_trace(x= ~ df.sub.pCO2$date_mean, y= ~ df.sub.pCO2$Sal_mean,type= 'scatter', mode= 'markers', marker = list(symbol= "circle", size= 3), error_y= ~list(type = "data", array=df.sub.pCO2$Sal_sd,
-                                                                                                                                                                  color= "grey"),  hoverinfo = 'text',
+  p3<- plot_ly(df.sub, name = "Mean Salinity", showlegend = FALSE,height = (400*4), width = 1200) %>% 
+      add_trace(x= ~ df.sub$date_mean, y= ~ df.sub$Sal_mean,type= 'scatter',
+                mode= 'markers', marker = list(symbol= "circle", size=4, color="grey"),
+                #error_y= ~list(type = "data", array=df.sub$Sal_sd,color= "grey"),
+                hoverinfo = 'text',
                 text = ~paste('</br> Mean Sal',
-                              '</br> Date', df.sub.pCO2$date_mean,
-                              '</br> Mean: ',  round(df.sub.pCO2$Sal_mean, digits= 2) ,
-                              '</br> Max: ', round(df.sub.pCO2$Sal_max, digits = 2),
-                              '</br> Min: ', round(df.sub.pCO2$Sal_min, digits = 2))) %>% 
+                              '</br> Date', df.sub$date_mean,
+                              '</br> Mean: ',  round(df.sub$Sal_mean, digits= 2) ,
+                              '</br> Max: ', round(df.sub$Sal_max, digits = 2),
+                              '</br> Min: ', round(df.sub$Sal_min, digits = 2))) %>% 
       layout(xaxis= a, yaxis = d,  autosize= FALSE)
     
   
@@ -370,14 +357,16 @@ server <- function(input, output) {
      
 ### PLOT MEAN O2
      
-     p5<- plot_ly(df.sub.pCO2, name = "Mean O2", showlegend = FALSE,height = (400*4),  width = 1200) %>%
-       add_trace(x= df.sub.pCO2$date_mean, y= df.sub.pCO2$cO2_mean,type= 'scatter', mode= 'markers', marker = list(symbol= "circle", size= 3), error_y= ~list(type = "data", array=df.sub.pCO2$cO2_sd,
-                                                                                                                                                              color= "grey"),  hoverinfo = 'text',
+     p5<- plot_ly(df.sub, name = "Mean O2", showlegend = FALSE,height = (400*4),  width = 1200) %>%
+       add_trace(x= df.sub$date_mean, y= df.sub$cO2_mean,type= 'scatter',
+                 mode= 'markers', marker = list(symbol= "circle", size=4, color="grey"),
+                 #error_y= ~list(type = "data", array=df.sub$cO2_sd, color= "grey"),
+                 hoverinfo = 'text',
                  text = ~paste('</br> Mean O2',
-                               '</br> Date', df.sub.pCO2$date_mean,
-                               '</br> Mean: ',  round(df.sub.pCO2$cO2_mean, digits= 2) ,
-                               '</br> Max: ', round(df.sub.pCO2$cO2_max, digits = 2),
-                               '</br> Min: ', round(df.sub.pCO2$cO2_min, digits = 2))) %>%
+                               '</br> Date', df.sub$date_mean,
+                               '</br> Mean: ',  round(df.sub$cO2_mean, digits= 2) ,
+                               '</br> Max: ', round(df.sub$cO2_max, digits = 2),
+                               '</br> Min: ', round(df.sub$cO2_min, digits = 2))) %>%
        layout(xaxis= a, yaxis = f,  autosize= FALSE)
      
     
@@ -393,7 +382,7 @@ server <- function(input, output) {
     
   
     # if(input$routeall == TRUE)
-    # Sub_pCO2 <<- df %>% 
+    # df.sub <<- df %>% 
     # filter(date >=input$daterange[1] & date <=input$daterange[2] & 
     #          Lon >= input$lon_low & Lon <= input$lon_high &
     #          Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
@@ -428,10 +417,10 @@ server <- function(input, output) {
   #Sub_pCO2$date <- as.POSIXct(strptime(Sub_pCO2$date, format="%Y-%m-%d %H:%M:%S", tz="GMT"))
 
  
-  cut_pCO2<<-Sub_pCO2
+  cut_pCO2<<-df.sub
   #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= 55, to = 60, by=0.02), labels = seq(from= 55+0.02, to= 60, by=0.02))
   #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= input$lat_low, to = input$lat_high, by=0.02), labels = seq(from= input$lat_low+0.02, to= input$lat_high, by=0.02))
-  cut_pCO2$dist.Hel<<-distGeo(cbind(Sub_pCO2$Lon, Sub_pCO2$Lat), Hel)/1e3
+  cut_pCO2$dist.Hel<<-distGeo(cbind(df.sub$Lon, df.sub$Lat), Hel)/1e3
   cut_pCO2$dist.Hel.int<<-cut(cut_pCO2$dist.Hel, seq(0, 1200, 50), labels =
                                seq(25, 1175, 50))
   
@@ -453,7 +442,7 @@ server <- function(input, output) {
   hov1 <-
     ggplot(data= cut_pCO2_mean)+
     geom_raster(aes(week, dist.Hel.int, fill= mean))+ #changed here: fill = pCO2_mean to mean
-    scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("pCO2[µatm]"))+
+    scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("pCO2[atm]"))+
    
     #until here working well and looking good
     #xlim(as.POSIXct("2003/1/1"), as.POSIXct("2018/1/1"))+
@@ -524,10 +513,10 @@ server <- function(input, output) {
     #Sub_pCO2$date <- as.POSIXct(strptime(Sub_pCO2$date, format="%Y-%m-%d %H:%M:%S", tz="GMT"))
     
    
-    cut_temp<-Sub_pCO2
+    cut_temp<-df.sub
     #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= 55, to = 60, by=0.02), labels = seq(from= 55+0.02, to= 60, by=0.02))
     #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= input$lat_low, to = input$lat_high, by=0.02), labels = seq(from= input$lat_low+0.02, to= input$lat_high, by=0.02))
-    cut_temp$dist.Hel<-distGeo(cbind(Sub_pCO2$Lon, Sub_pCO2$Lat), Hel)/1e3
+    cut_temp$dist.Hel<-distGeo(cbind(df.sub$Lon, df.sub$Lat), Hel)/1e3
     cut_temp$dist.Hel.int<-cut(cut_temp$dist.Hel, seq(0, 1200, 50), labels =
                                  seq(25, 1175, 50))
     
@@ -550,7 +539,7 @@ server <- function(input, output) {
     hov2 <-
       ggplot(data= cut_temp_mean)+
       geom_raster(aes(week, dist.Hel.int, fill= mean))+ #changed here: fill = Tem_mean to mean
-      scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("Temperature [°C]"))+
+      scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("Temperature [C]"))+
       
       #until here working well and looking good
       #xlim(as.POSIXct("2003/1/1"), as.POSIXct("2018/1/1"))+
@@ -623,7 +612,7 @@ server <- function(input, output) {
     #Sub_pCO2$date <- as.POSIXct(strptime(Sub_pCO2$date, format="%Y-%m-%d %H:%M:%S", tz="GMT"))
     
     
-    cut_sal<-Sub_pCO2
+    cut_sal<-df.sub
     #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= 55, to = 60, by=0.02), labels = seq(from= 55+0.02, to= 60, by=0.02))
     #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= input$lat_low, to = input$lat_high, by=0.02), labels = seq(from= input$lat_low+0.02, to= input$lat_high, by=0.02))
     cut_sal$dist.Hel<-distGeo(cbind(cut_sal$Lon, cut_sal$Lat), Hel)/1e3
@@ -648,7 +637,7 @@ server <- function(input, output) {
     hov3 <-
       ggplot(data= cut_sal_mean)+
       geom_raster(aes(week, dist.Hel.int, fill= mean))+ #changed here: fill = Sal_mean to mean
-      scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("Salinity[‰]"))+
+      scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("Salinity[]"))+
       
       #until here working well and looking good
       #xlim(as.POSIXct("2003/1/1"), as.POSIXct("2018/1/1"))+
@@ -681,11 +670,11 @@ server <- function(input, output) {
   
   
   
-#HovmÃÂ¶ller Plot CH4 Mean
+#Hovmoeller Plot CH4 Mean
   
   
   
-#HovmÃÂ¶ller Plot O2
+#Hovmoeller Plot O2
   output$hov_o2_mean <- renderPlot({
     
     
@@ -725,7 +714,7 @@ server <- function(input, output) {
     #Sub_pCO2$date <- as.POSIXct(strptime(Sub_pCO2$date, format="%Y-%m-%d %H:%M:%S", tz="GMT"))
     
     
-    cut_o2<<-Sub_pCO2
+    cut_o2<<-df.sub
     #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= 55, to = 60, by=0.02), labels = seq(from= 55+0.02, to= 60, by=0.02))
     #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= input$lat_low, to = input$lat_high, by=0.02), labels = seq(from= input$lat_low+0.02, to= input$lat_high, by=0.02))
     cut_o2$dist.Hel<-distGeo(cbind(cut_o2$Lon, cut_o2$Lat), Hel)/1e3
@@ -750,7 +739,7 @@ server <- function(input, output) {
     hov4 <-
       ggplot(data= cut_o2_mean)+
       geom_raster(aes(week, dist.Hel.int, fill= mean))+ #changed here: fill = Tem_mean to mean
-      scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("O2[‰]"))+
+      scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("O2[]"))+
       #xlim(as.POSIXct("2003/1/1"), as.POSIXct("2018/1/1"))+
       geom_vline(xintercept = as.numeric(seq(as.POSIXct("2003/1/1", tz="GMT"), 
                                              as.POSIXct("2018/1/1", tz="GMT"), 
@@ -1038,7 +1027,7 @@ output$trans_o2 <- renderPlotly({
    datasetInput <- reactive({
   
     switch(input$dataset,
-           "Time Series Data"=df.sub.pCO2,
+           "Time Series Data"=df.sub,
            
            "Transect Data"= cut_trans,
            
