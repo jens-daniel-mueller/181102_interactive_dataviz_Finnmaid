@@ -24,7 +24,7 @@ library(dplyr)
 
 # 01: load data -- -------------------------------------------------------------
 
-#df <- data.table(read.csv("../Finnmaid_all_2019.csv", sep = ";"))
+#df <- data.table(read.csv("Finnmaid_all_2019.csv", sep = ","))
 df$date<-as.Date(df$date)
 df$route<-as.character(df$route)
 x<-c(0,0)
