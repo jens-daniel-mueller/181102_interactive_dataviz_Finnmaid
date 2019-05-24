@@ -24,8 +24,9 @@ library(dplyr)
 
 # 01: load data -- -------------------------------------------------------------
 
-#df <- data.table(read.csv("../Finnmaid_all_2019.csv", sep = ","))
+#df <- data.table(read.csv("Finnmaid_all_2019.csv", sep = ","))
 #df$date<-as.Date(df$date)
+
 df$route<-as.character(df$route)
 x<-c(0,0)
 Hel <- c(24.945831, 60.192059)
@@ -54,6 +55,7 @@ routeP<-df %>%
   filter(ID == "20160328")
 
 routeall<-rbind(routeE, routeP, routeG, routeW)
+
 # 03: define UI --------------------------------------------------------------
 ui <- fluidPage(
   fluidRow(
@@ -287,12 +289,12 @@ server <- function(input, output) {
                Lat >=input$lat_low & Lat <= input$lat_high ) %>%
       dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal, cO2)
 
-    df.sub.mean.pCO2 <- df.sub %>% 
+    df.sub.mean <- df.sub %>% 
       group_by(ID) %>% 
       summarise_all(funs(mean = mean), na.rm = TRUE) %>% 
       dplyr::select(ID,date_mean, pCO2_mean, Tem_mean,Sal_mean,cO2_mean) #add ch4_mean here as soon as data is there
     
-    df.sub.min.max.pCO2 <- df.sub %>% 
+    df.sub.min.max <- df.sub %>% 
       group_by(ID) %>% 
       summarise_if(is.numeric, funs(min,max), na.rm = TRUE) %>% 
       dplyr::select(pCO2_min, pCO2_max, Tem_min, Tem_max, Sal_min, Sal_max, cO2_min, cO2_max)#add ch4_min/max here as soon as data is there
@@ -303,7 +305,7 @@ server <- function(input, output) {
       dplyr::select(pCO2_sd, Tem_sd, Sal_sd,cO2_sd)
     
     
-    df.sub<<-bind_cols(df.sub.mean.pCO2,df.sub.min.max.pCO2,df.sub.sd)
+    df.sub<<-bind_cols(df.sub.mean,df.sub.min.max,df.sub.sd)
    
     
 ### PLOT MEAN pCO2 ###
@@ -380,43 +382,30 @@ server <- function(input, output) {
   
   output$hov_pCO2_mean <- renderPlot({
     
-  
-    # if(input$routeall == TRUE)
-    # df.sub <<- df %>% 
-    # filter(date >=input$daterange[1] & date <=input$daterange[2] & 
-    #          Lon >= input$lon_low & Lon <= input$lon_high &
-    #          Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-    # dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
-  if (input$routeE == TRUE)
-    Sub_pCO2 <<- df %>% 
-    filter(route=="E" & date >=input$daterange[1] & date <=input$daterange[2] & 
-             Lon >= input$lon_low & Lon <= input$lon_high &
-             Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-    dplyr::select(date,Lon,Lat,pCO2,Tem,ID) else {NULL} 
-  if (input$routeW == TRUE)
-    Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
-                        filter(route == "W", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL} 
-  if(input$routeP == TRUE)
-    Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
-                        filter(route == "P", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
-  if(input$routeG == TRUE)
-    Sub_pCO2 <<-rbind(Sub_pCO2,df %>% 
-                        filter(route == "G", date >=input$daterange[1] & date <=input$daterange[2] & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,pCO2,Tem,ID)) else {NULL}
-  
+    routelist<- as.vector(NULL)
 
-  
+
+    if (input$routeE == TRUE)
+      routelist <- c(routelist, "E") else {NULL}
+
+    if (input$routeW == TRUE)
+      routelist <- c(routelist, "W") else {NULL}
+
+    if(input$routeP == TRUE)
+      routelist <- c(routelist, "P") else {NULL}
+
+    if(input$routeG == TRUE)
+      routelist <- c(routelist, "G") else {NULL}
+
+    df.sub <<- df %>%
+      filter(route %in% routelist,
+             date >=input$daterange[1] & date <=input$daterange[2] &
+               Lon >= input$lon_low & Lon <= input$lon_high &
+               Lat >=input$lat_low & Lat <= input$lat_high ) %>%
+      dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal, cO2)
+    
   #Sub_pCO2$date <- as.POSIXct(strptime(Sub_pCO2$date, format="%Y-%m-%d %H:%M:%S", tz="GMT"))
 
- 
   cut_pCO2<<-df.sub
   #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= 55, to = 60, by=0.02), labels = seq(from= 55+0.02, to= 60, by=0.02))
   #cut_pCO2$Lat.int <-cut(cut_pCO2$Lat, breaks=seq(from= input$lat_low, to = input$lat_high, by=0.02), labels = seq(from= input$lat_low+0.02, to= input$lat_high, by=0.02))
@@ -431,7 +420,7 @@ server <- function(input, output) {
   cut_pCO2_mean<<-cut_pCO2 %>% 
     dplyr::select(dist.Hel.int, week, pCO2) %>% 
     group_by(dist.Hel.int, week) %>% 
-    summarise_all(funs(mean= mean)) %>% 
+    summarise_all(funs(mean= mean), na.rm = TRUE) %>% 
     as.data.frame() 
   
   cut_pCO2_mean$pCO2_mean<<-cut_pCO2_mean$mean
@@ -440,24 +429,19 @@ server <- function(input, output) {
   cut_pCO2_mean$week<<-as.POSIXct(cut_pCO2_mean$week)
   
   hov1 <-
-    ggplot(data= cut_pCO2_mean)+
-    geom_raster(aes(week, dist.Hel.int, fill= mean))+ #changed here: fill = pCO2_mean to mean
-    scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("pCO2[atm]"))+
-   
-    #until here working well and looking good
-    #xlim(as.POSIXct("2003/1/1"), as.POSIXct("2018/1/1"))+
+    cut_pCO2_mean %>% 
+    filter(!is.na(mean)) %>% 
+    ggplot()+
+    geom_raster(aes(week, dist.Hel.int, fill= mean))+
+    scale_fill_viridis_c(name="pCO2 [ppm]", direction = -1)+
     geom_vline(xintercept = as.numeric(seq(as.POSIXct("2003/1/1", tz="GMT"), 
                                           as.POSIXct("2018/1/1", tz="GMT"), 
                                           "years")),
                size=1)+
-    #scale_color_brewer(palette="Set1", name="pCO2 (µatm)")+
-     #                    (name=expression("pCO2[µatm]")+
-      #                   limits=c(100, 600))+
-    scale_x_datetime(date_breaks= "1 year", date_labels = "%Y")+
-    #scale_x_datetime(breaks = seq(as.POSIXct("2004/1/1", tz="GMT"), as.POSIXct("2016/1/1", tz="GMT"), "2 years"),
-     #                expand = c(0,0))+
-    scale_y_continuous(breaks = seq(0, 1000, 50))+
+    scale_x_datetime(expand = c(0,0))+
+    scale_y_continuous(expand = c(0,0))+
     labs(y="Distance to Helsinki [km])")+
+    theme_bw()+
     theme(
       axis.title.x = element_blank(),
       legend.position = "bottom",
@@ -772,56 +756,49 @@ server <- function(input, output) {
 
 ### Transect Plot pCO2 ###
   output$trans_pCO2 <- renderPlotly({
-    # 
-    # if(input$routeall == TRUE)
-    # trans_sub <<- df %>% 
-    #     filter(date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-    #              Lon >= input$lon_low & Lon <= input$lon_high &
-    #              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-    #     dplyr::select(date,Lon,pCO2, Lat, Sal, Tem, cO2) else {NULL} 
-    if (input$routeE == TRUE)
-      trans_sub <- df %>% 
-        filter(route == "E", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-                 Lon >= input$lon_low & Lon <= input$lon_high &
-                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        dplyr::select(date,Lon,pCO2, Lat, Sal, Tem, cO2) else {NULL} 
-    if (input$routeW == TRUE)
-      trans_sub <-rbind(trans_sub,df %>% 
-                          filter(route == "W", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2, Sal, Tem, cO2)) else {NULL}  
-    if(input$routeP == TRUE)
-      trans_sub <-rbind(trans_sub,df %>% 
-                          filter(route == "P", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2, Sal, Tem, cO2)) else {NULL}
-    if(input$routeG == TRUE)
-      trans_sub <-rbind(trans_sub,df %>% 
-                          filter(route == "G", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-                                   Lon >= input$lon_low & Lon <= input$lon_high &
-                                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                          dplyr::select(date,Lon,Lat,pCO2, Sal, Tem, cO2)) else {NULL}
+    routelist<- as.vector(NULL)
     
-    cut_trans<-trans_sub
+    
+    if (input$routeE == TRUE)
+      routelist <- c(routelist, "E") else {NULL} 
+    
+    if (input$routeW == TRUE)
+      routelist <- c(routelist, "W") else {NULL} 
+    
+    if(input$routeP == TRUE)
+      routelist <- c(routelist, "P") else {NULL}
+    
+    if(input$routeG == TRUE)
+      routelist <- c(routelist, "G") else {NULL}
+    
+    trans.sub <<- df %>% 
+      filter(route %in% routelist,
+             lubridate::ymd(ID) >=input$daterange[1] &
+               lubridate::ymd(ID) <=(input$daterange[1]+14) &
+               Lon >= input$lon_low & Lon <= input$lon_high &
+               Lat >=input$lat_low & Lat <= input$lat_high ) %>%
+      dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal, cO2)
+    
+    cut_trans<-trans.sub
     cut_trans$dist.Hel<-distGeo(cbind(cut_trans$Lon, cut_trans$Lat), Hel)/1e3
-    cut_trans$dist.Hel.int<-cut(cut_trans$dist.Hel, seq(0, 1200, 50), labels =
-                               seq(25, 1175, 50))
+    # cut_trans$dist.Hel.int<-cut(cut_trans$dist.Hel, seq(0, 1200, 50), labels =
+    #                            seq(25, 1175, 50))
+    
     #cut_trans$week <- cut(cut_trans$date, breaks="weeks")
     #cut_trans$week <- as.Date(cut_trans$week, tz="GMT")
     
-    # irgendwie so wird es funktionieren  
-    cut_trans$date<-as.character(cut_trans$date)
+    # irgendwie so wird es funktionieren  
+    cut_trans$date<-as.character(lubridate::ymd(cut_trans$ID))
     cut_trans<-cut_trans %>% arrange(desc(date))
     
-    t1<-cut_trans %>% 
-        group_by(date) %>% 
-        ggplot(aes(x= dist.Hel, y= pCO2, color = date))+
-        geom_line()+
-        scale_color_brewer(palette="RdGy", direction = -1)+
-      ylab("pCO2[µatm]")+
-      xlab("Distance to Helsinki [km]")
+    t1<-cut_trans %>%
+      group_by(date) %>% 
+      ggplot(aes(x= dist.Hel, y= pCO2, color = date))+
+      geom_line()+
+      scale_color_viridis_d(direction = -1)+
+      ylab("pCO2 [ppm]")+
+      xlab("Distance to Helsinki [km]")+
+      theme_bw()
     
     t1
     # if (input$pCO2_mean == TRUE)
@@ -832,40 +809,29 @@ server <- function(input, output) {
 ### Transect Plot Temperature ###
     
 output$trans_temp <- renderPlotly({
+  routelist<- as.vector(NULL)
+  
+  
+  if (input$routeE == TRUE)
+    routelist <- c(routelist, "E") else {NULL} 
+  
+  if (input$routeW == TRUE)
+    routelist <- c(routelist, "W") else {NULL} 
+  
+  if(input$routeP == TRUE)
+    routelist <- c(routelist, "P") else {NULL}
+  
+  if(input$routeG == TRUE)
+    routelist <- c(routelist, "G") else {NULL}
+  
+  trans.sub <<- df %>% 
+    filter(route %in% routelist,
+           date >=input$daterange[1] & date <=(input$daterange[1]+30) &
+             Lon >= input$lon_low & Lon <= input$lon_high &
+             Lat >=input$lat_low & Lat <= input$lat_high ) %>%
+    dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal, cO2)
       
-      # if(input$routeall == TRUE)
-      #   trans_sub <<- df %>% 
-      #     filter(date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-      #              Lon >= input$lon_low & Lon <= input$lon_high &
-      #              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      #     dplyr::select(date,Lon,pCO2, Lat, Sal, Tem, cO2) else {NULL} 
-      if (input$routeE == TRUE)
-        trans_sub <- df %>% 
-          filter(route == "E", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-                   Lon >= input$lon_low & Lon <= input$lon_high &
-                   Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-          dplyr::select(date,Lon,pCO2, Lat, Sal, Tem, cO2) else {NULL} 
-      if (input$routeW == TRUE)
-        trans_sub <-rbind(trans_sub,df %>% 
-                            filter(route == "W", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-                                     Lon >= input$lon_low & Lon <= input$lon_high &
-                                     Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                            dplyr::select(date,Lon,Lat,pCO2, Sal, Tem, cO2)) else {NULL}  
-     
-      if(input$routeP == TRUE)
-        trans_sub <-rbind(trans_sub,df %>% 
-                            filter(route == "P", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-                                     Lon >= input$lon_low & Lon <= input$lon_high &
-                                     Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                            dplyr::select(date,Lon,Lat,pCO2, Sal, Tem, cO2)) else {NULL}
-      if(input$routeG == TRUE)
-        trans_sub <-rbind(trans_sub,df %>% 
-                            filter(route == "G", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-                                     Lon >= input$lon_low & Lon <= input$lon_high &
-                                     Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                            dplyr::select(date,Lon,Lat,pCO2, Sal, Tem, cO2)) else {NULL}
-      
-      cut_trans<-trans_sub
+      cut_trans<-trans.sub
       cut_trans$dist.Hel<-distGeo(cbind(cut_trans$Lon, cut_trans$Lat), Hel)/1e3
       cut_trans$dist.Hel.int<-cut(cut_trans$dist.Hel, seq(0, 1200, 50), labels =
                                     seq(25, 1175, 50))
@@ -896,40 +862,29 @@ output$trans_temp <- renderPlotly({
 ### Transect Plot Salinity ###
     
 output$trans_sal <- renderPlotly({
+  routelist<- as.vector(NULL)
+  
+  
+  if (input$routeE == TRUE)
+    routelist <- c(routelist, "E") else {NULL} 
+  
+  if (input$routeW == TRUE)
+    routelist <- c(routelist, "W") else {NULL} 
+  
+  if(input$routeP == TRUE)
+    routelist <- c(routelist, "P") else {NULL}
+  
+  if(input$routeG == TRUE)
+    routelist <- c(routelist, "G") else {NULL}
+  
+  trans.sub <<- df %>% 
+    filter(route %in% routelist,
+           date >=input$daterange[1] & date <=(input$daterange[1]+30) &
+             Lon >= input$lon_low & Lon <= input$lon_high &
+             Lat >=input$lat_low & Lat <= input$lat_high ) %>%
+    dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal, cO2)
         
-        # if(input$routeall == TRUE)
-        #   trans_sub <<- df %>% 
-        #     filter(date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-        #              Lon >= input$lon_low & Lon <= input$lon_high &
-        #              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-        #     dplyr::select(date,Lon,pCO2, Lat, Sal, Tem, cO2) else {NULL} 
-        if (input$routeE == TRUE)
-          trans_sub <- df %>% 
-            filter(route == "E", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-                     Lon >= input$lon_low & Lon <= input$lon_high &
-                     Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-            dplyr::select(date,Lon,pCO2, Lat, Sal, Tem, cO2) else {NULL} 
-        if (input$routeW == TRUE)
-          trans_sub <-rbind(trans_sub,df %>% 
-                              filter(route == "W", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-                                       Lon >= input$lon_low & Lon <= input$lon_high &
-                                       Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                              dplyr::select(date,Lon,Lat,pCO2, Sal, Tem, cO2)) else {NULL}  
-        
-        if(input$routeP == TRUE)
-          trans_sub <-rbind(trans_sub,df %>% 
-                              filter(route == "P", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-                                       Lon >= input$lon_low & Lon <= input$lon_high &
-                                       Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                              dplyr::select(date,Lon,Lat,pCO2, Sal, Tem, cO2)) else {NULL}
-        if(input$routeG == TRUE)
-          trans_sub <-rbind(trans_sub,df %>% 
-                              filter(route == "G", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-                                       Lon >= input$lon_low & Lon <= input$lon_high &
-                                       Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                              dplyr::select(date,Lon,Lat,pCO2, Sal, Tem, cO2)) else {NULL}
-        
-        cut_trans<-trans_sub
+        cut_trans<-trans.sub
         cut_trans$dist.Hel<-distGeo(cbind(cut_trans$Lon, cut_trans$Lat), Hel)/1e3
         cut_trans$dist.Hel.int<-cut(cut_trans$dist.Hel, seq(0, 1200, 50), labels =
                                       seq(25, 1175, 50))
@@ -959,39 +914,29 @@ output$trans_sal <- renderPlotly({
 
 output$trans_o2 <- renderPlotly({
   
-  # if(input$routeall == TRUE)
-  #   trans_sub <<- df %>% 
-  #     filter(date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-  #              Lon >= input$lon_low & Lon <= input$lon_high &
-  #              Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-  #     dplyr::select(date,Lon,pCO2, Lat, Sal, Tem, cO2) else {NULL} 
-  if (input$routeE == TRUE)
-    trans_sub <- df %>% 
-      filter(route == "E", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-      dplyr::select(date,Lon,pCO2, Lat, Sal, Tem, cO2) else {NULL} 
-  if (input$routeW == TRUE)
-    trans_sub <-rbind(trans_sub,df %>% 
-                        filter(route == "W", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,pCO2, Sal, Tem, cO2)) else {NULL}  
- 
-  if(input$routeP == TRUE)
-    trans_sub <-rbind(trans_sub,df %>% 
-                        filter(route == "P", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,pCO2, Sal, Tem, cO2)) else {NULL}
-  if(input$routeG == TRUE)
-    trans_sub <-rbind(trans_sub,df %>% 
-                        filter(route == "G", date >=input$daterange[1] & date <=(input$daterange[1]+30) & 
-                                 Lon >= input$lon_low & Lon <= input$lon_high &
-                                 Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
-                        dplyr::select(date,Lon,Lat,pCO2, Sal, Tem, cO2)) else {NULL}
+  routelist<- as.vector(NULL)
   
-  cut_trans<<-trans_sub
+  
+  if (input$routeE == TRUE)
+    routelist <- c(routelist, "E") else {NULL} 
+  
+  if (input$routeW == TRUE)
+    routelist <- c(routelist, "W") else {NULL} 
+  
+  if(input$routeP == TRUE)
+    routelist <- c(routelist, "P") else {NULL}
+  
+  if(input$routeG == TRUE)
+    routelist <- c(routelist, "G") else {NULL}
+  
+  trans.sub <<- df %>% 
+    filter(route %in% routelist,
+           date >=input$daterange[1] & date <=(input$daterange[1]+30) &
+             Lon >= input$lon_low & Lon <= input$lon_high &
+             Lat >=input$lat_low & Lat <= input$lat_high ) %>%
+    dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal, cO2)
+  
+  cut_trans<<-trans.sub
   cut_trans$dist.Hel<<-distGeo(cbind(cut_trans$Lon, cut_trans$Lat), Hel)/1e3
   cut_trans$dist.Hel.int<<-cut(cut_trans$dist.Hel, seq(0, 1200, 50), labels =
                                 seq(25, 1175, 50))
