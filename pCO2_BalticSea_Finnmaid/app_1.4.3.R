@@ -131,8 +131,11 @@ ui <- fluidPage(
 # 04: Server function ---------------------------------------------------------
 # Define server logic required to draw mapPlot and scatterPlot for mainpanel
 server <- function(input, output) {
+
   
-  #reactive expression df.sub: generates subset of all datapoints for chosen parameters in app
+# 04a: interactive subset generation ------------------------------------------    
+ 
+   #reactive expression df.sub: generates subset of all datapoints for chosen parameters in app
   df.sub <- reactive({
     
     routelist<- as.vector(NULL)
@@ -177,10 +180,11 @@ server <- function(input, output) {
   #reactive expression df.sub.hov: generates cut dataframe for hovmoeller plots
   
   df.sub.hov<-reactive({
+    
     sub.df.hov<-df.sub()
     
-    sub.df.hov$dist.trav <- distGeo(cbind(df.sub$Lon, df.sub$Lat), trav) / 1e3
-    sub.df.hov$dist.trav.int<-cut(cut_pCO2$dist.trav, seq(0, 1200, 50), labels =
+    sub.df.hov$dist.trav <- distGeo(cbind(sub.df.hov$Lon, sub.df.hov$Lat), trav) / 1e3
+    sub.df.hov$dist.trav.int<-cut(sub.df.hov$dist.trav, seq(0, 1200, 50), labels =
                                      seq(25, 1175, 50))
       
     sub.df.hov$week <- cut(sub.df.hov$date, breaks="weeks")
@@ -193,9 +197,27 @@ server <- function(input, output) {
       summarise_all(list(~mean(.,na.rm=TRUE))) %>% 
       as.data.frame() 
     
-    sub.df.hov.mean$dist.trav.int<<-as.numeric(as.character(sub.df.hov.mean$dist.trav.int))
+    #sub.df.hov.mean$dist.trav.int<<-as.numeric(as.character(sub.df.hov.mean$dist.trav.int))
     
     sub.df.hov.mean$week<<-as.POSIXct(sub.df.hov.mean$week)
+  })
+  
+  #reactive expression df.sub.transect: generates cut dataframe for transect plots
+  df.sub.transect<-reactive({
+    
+    sub.df.transect<-df.sub()
+    
+    sub.df.transect$dist.trav<-distGeo(cbind(sub.df.transect$Lon, sub.df.transect$Lat), trav)/1e3
+    sub.df.transect$dist.trav.int<-cut(sub.df.transect$dist.trav, seq(0, 1200, 50), labels =
+                                  seq(25, 1175, 50))
+    
+    #sub.df.transect$week <- cut(sub.df.transect$date, breaks="weeks")
+    #sub.df.transect$week <- as.Date(sub.df.transect$week, tz="GMT")
+    
+    sub.df.transect$date<-as.character(lubridate::ymd(sub.df.transect$ID))
+    sub.df.transect<-sub.df.transect %>% 
+                                    arrange(desc(date))
+    
   })
   # 04a: Output Values per point ------------------------------------------------  
   output$ValuesPerPoint <- renderText({
@@ -671,42 +693,10 @@ server <- function(input, output) {
 
 ### Transect Plot pCO2 ###
   output$trans_pCO2 <- renderPlotly({
-    routelist<- as.vector(NULL)
+   
+    sub.df.transect<-df.sub.transect()
     
-    
-    if (input$routeE == TRUE)
-      routelist <- c(routelist, "E") else {NULL} 
-    
-    if (input$routeW == TRUE)
-      routelist <- c(routelist, "W") else {NULL} 
-    
-    if(input$routeP == TRUE)
-      routelist <- c(routelist, "P") else {NULL}
-    
-    if(input$routeG == TRUE)
-      routelist <- c(routelist, "G") else {NULL}
-    
-    trans.sub <<- df %>% 
-      filter(route %in% routelist,
-             lubridate::ymd(ID) >=input$daterange[1] &
-               lubridate::ymd(ID) <=(input$daterange[1]+14) &
-               Lon >= input$lon_low & Lon <= input$lon_high &
-               Lat >=input$lat_low & Lat <= input$lat_high ) %>%
-      dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal, cO2)
-    
-    cut_trans<-trans.sub
-    cut_trans$dist.trav<-distGeo(cbind(cut_trans$Lon, cut_trans$Lat), trav)/1e3
-    # cut_trans$dist.trav.int<-cut(cut_trans$dist.trav, seq(0, 1200, 50), labels =
-    #                            seq(25, 1175, 50))
-    
-    #cut_trans$week <- cut(cut_trans$date, breaks="weeks")
-    #cut_trans$week <- as.Date(cut_trans$week, tz="GMT")
-    
-    # irgendwie so wird es funktionieren  
-    cut_trans$date<-as.character(lubridate::ymd(cut_trans$ID))
-    cut_trans<-cut_trans %>% arrange(desc(date))
-    
-    t1<-cut_trans %>%
+    t1<-sub.df.transect %>%
       group_by(date) %>% 
       ggplot(aes(x= dist.trav, y= pCO2, color = date))+
       geom_line()+
@@ -716,9 +706,6 @@ server <- function(input, output) {
       theme_bw()
     
     t1
-    # if (input$pCO2_mean == TRUE)
-    #   (t1) else
-    #   {NULL}
   })
     
 ### Transect Plot Temperature ###
@@ -726,38 +713,9 @@ server <- function(input, output) {
 output$trans_temp <- renderPlotly({
   routelist<- as.vector(NULL)
   
-  
-  if (input$routeE == TRUE)
-    routelist <- c(routelist, "E") else {NULL} 
-  
-  if (input$routeW == TRUE)
-    routelist <- c(routelist, "W") else {NULL} 
-  
-  if(input$routeP == TRUE)
-    routelist <- c(routelist, "P") else {NULL}
-  
-  if(input$routeG == TRUE)
-    routelist <- c(routelist, "G") else {NULL}
-  
-  trans.sub <<- df %>% 
-    filter(route %in% routelist,
-           date >=input$daterange[1] & date <=(input$daterange[1]+30) &
-             Lon >= input$lon_low & Lon <= input$lon_high &
-             Lat >=input$lat_low & Lat <= input$lat_high ) %>%
-    dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal, cO2)
+  sub.df.transect<-df.sub.transect()
       
-      cut_trans<-trans.sub
-      cut_trans$dist.trav<-distGeo(cbind(cut_trans$Lon, cut_trans$Lat), trav)/1e3
-      cut_trans$dist.trav.int<-cut(cut_trans$dist.trav, seq(0, 1200, 50), labels =
-                                    seq(25, 1175, 50))
-      #cut_trans$week <- cut(cut_trans$date, breaks="weeks")
-      #cut_trans$week <- as.Date(cut_trans$week, tz="GMT")
-      
-      # irgendwie so wird es funktionieren  
-      cut_trans$date<-as.character(cut_trans$date)
-      cut_trans<-cut_trans %>% arrange(desc(date))
-      
-      t2<-cut_trans %>% 
+      t2<-sub.df.transect %>% 
         group_by(date) %>% 
         ggplot(aes(x= dist.trav, y= Tem, color = date))+
         geom_line()+
@@ -766,51 +724,16 @@ output$trans_temp <- renderPlotly({
         xlab("Distance to Travemuende [km]")
       
       t2
-      
-      # if (input$temp_mean == TRUE)
-      #   (t2) else
-      #   {NULL}
-      
     })
     
     
 ### Transect Plot Salinity ###
     
 output$trans_sal <- renderPlotly({
-  routelist<- as.vector(NULL)
   
-  
-  if (input$routeE == TRUE)
-    routelist <- c(routelist, "E") else {NULL} 
-  
-  if (input$routeW == TRUE)
-    routelist <- c(routelist, "W") else {NULL} 
-  
-  if(input$routeP == TRUE)
-    routelist <- c(routelist, "P") else {NULL}
-  
-  if(input$routeG == TRUE)
-    routelist <- c(routelist, "G") else {NULL}
-  
-  trans.sub <<- df %>% 
-    filter(route %in% routelist,
-           date >=input$daterange[1] & date <=(input$daterange[1]+30) &
-             Lon >= input$lon_low & Lon <= input$lon_high &
-             Lat >=input$lat_low & Lat <= input$lat_high ) %>%
-    dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal, cO2)
+  sub.df.transect<-df.sub.transect()
         
-        cut_trans<-trans.sub
-        cut_trans$dist.trav<-distGeo(cbind(cut_trans$Lon, cut_trans$Lat), trav)/1e3
-        cut_trans$dist.trav.int<-cut(cut_trans$dist.trav, seq(0, 1200, 50), labels =
-                                      seq(25, 1175, 50))
-        #cut_trans$week <- cut(cut_trans$date, breaks="weeks")
-        #cut_trans$week <- as.Date(cut_trans$week, tz="GMT")
-        
-        # irgendwie so wird es funktionieren  
-        cut_trans$date<-as.character(cut_trans$date)
-        cut_trans<-cut_trans %>% arrange(desc(date))
-        
-        t3<-cut_trans %>% 
+        t3<-sub.df.transect %>% 
           group_by(date) %>% 
           ggplot(aes(x= dist.trav, y= Sal, color = date))+
           geom_line()+
@@ -820,49 +743,15 @@ output$trans_sal <- renderPlotly({
         
         
         t3
-        #if (input$sal_mean == TRUE)
-        #  (t3) else
-        #  {NULL}
 })
 
 ### Transect Plot O2 ###
 
 output$trans_o2 <- renderPlotly({
   
-  routelist<- as.vector(NULL)
+  sub.df.transect<-df.sub.transect()
   
-  
-  if (input$routeE == TRUE)
-    routelist <- c(routelist, "E") else {NULL} 
-  
-  if (input$routeW == TRUE)
-    routelist <- c(routelist, "W") else {NULL} 
-  
-  if(input$routeP == TRUE)
-    routelist <- c(routelist, "P") else {NULL}
-  
-  if(input$routeG == TRUE)
-    routelist <- c(routelist, "G") else {NULL}
-  
-  trans.sub <<- df %>% 
-    filter(route %in% routelist,
-           date >=input$daterange[1] & date <=(input$daterange[1]+30) &
-             Lon >= input$lon_low & Lon <= input$lon_high &
-             Lat >=input$lat_low & Lat <= input$lat_high ) %>%
-    dplyr::select(date,Lon,Lat,pCO2,Tem,ID, Sal, cO2)
-  
-  cut_trans<<-trans.sub
-  cut_trans$dist.trav<<-distGeo(cbind(cut_trans$Lon, cut_trans$Lat), trav)/1e3
-  cut_trans$dist.trav.int<<-cut(cut_trans$dist.trav, seq(0, 1200, 50), labels =
-                                seq(25, 1175, 50))
-  #cut_trans$week <- cut(cut_trans$date, breaks="weeks")
-  #cut_trans$week <- as.Date(cut_trans$week, tz="GMT")
-  
-  # irgendwie so wird es funktionieren  
-  cut_trans$date<<-as.character(cut_trans$date)
-  cut_trans<<-cut_trans %>% arrange(desc(date))
-  
-  t5<-cut_trans %>% 
+  t5<-sub.df.transect %>% 
     group_by(date) %>% 
     ggplot(aes(x= dist.trav, y= cO2, color = date))+
     geom_line()+
@@ -870,13 +759,7 @@ output$trans_o2 <- renderPlotly({
     ylab("O2[‰]")+
     xlab("Distance to Travemuende [km]")
     
-  
-  
   t5
-  #if (input$o2_mean == TRUE)
-  #  (t5) else
-  #  {NULL}
-
 })
 
   
@@ -887,11 +770,11 @@ output$trans_o2 <- renderPlotly({
    datasetInput <- reactive({
   
     switch(input$dataset,
-           "Time Series Data"=df.sub,
+           "Time Series Data" = df.sub.timeseries(),
            
-           "Transect Data"= cut_trans,
+           "Transect Data" = df.sub.transect(),
            
-           "Hovmoeller Data"=cut_pCO2_mean
+           "Hovmoeller Data" = df.sub.hov()
     )
     })
 
@@ -907,9 +790,6 @@ output$trans_o2 <- renderPlotly({
     write.csv(datasetInput(), file, row.names = FALSE)
       }
   )
-  
-
-  
   } #end server function
 # 05: Run the app -----------------------------------------------------------
 shinyApp(ui = ui, server = server)
