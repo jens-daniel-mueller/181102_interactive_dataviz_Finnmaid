@@ -263,6 +263,8 @@ server <- function(input, output) {
     title= "O2 [umol L-1]",
     showticklabels = TRUE)
   h<-list("Distance to Helsinki [km]", showticklabels = TRUE)
+  
+  
   # 04b2: Time Series Plots -----------------------------------------------
   # Plot Mean pCO2
   output$plot_timeseries <- renderPlotly({
@@ -377,6 +379,9 @@ server <- function(input, output) {
     subplot(plotlist, nrows= length(plotlist), shareX = TRUE, titleY = TRUE)
   })
  
+  
+  
+  
   # 04d: Hovmoeller Plots ------------------------------------
 #Hovmoeller Plot pCO2 Mean
   
