@@ -22,7 +22,7 @@ library(base)
 library(geosphere)
 
 #library(plyr)
-#library(dplyr)
+library(dplyr)
 
 
 # 01: load data -- -------------------------------------------------------------
@@ -117,20 +117,21 @@ ui <- fluidPage(
                                   plotOutput("hov_temp_mean"),
                                   plotOutput("hov_sal_mean"),
                                   #plotOutput("hov_ch4_mean"),
-                                  plotOutput("hov_o2_mean")),
-              tabPanel("Transektplots",
-                       plotlyOutput("trans_pCO2"),
-                       plotlyOutput("trans_temp"),
-                       plotlyOutput("trans_sal"),
-                       #plotlyOutput("trans_ch4"),
-                       plotlyOutput("trans_o2"))#,
-              #tabPanel("Table Output",
-                       #tableOutput("datatable"))
-              )
+                                  plotOutput("hov_o2_mean")
+                      ),
+                        tabPanel("Transektplots",
+                                  plotlyOutput("plot_transect", inline = TRUE, height = 1200)
+                                  #plotlyOutput("trans_pCO2"),
+                                  #plotlyOutput("trans_temp"),
+                                  #plotlyOutput("trans_sal"),
+                                  #plotlyOutput("trans_ch4"),
+                                  #plotlyOutput("trans_o2"))#,
+                      )
+          )
+        )
       )
     )
   )
-)
 # 04: Server function ---------------------------------------------------------
 # Define server logic required to draw mapPlot and scatterPlot for mainpanel
 server <- function(input, output) {
@@ -186,13 +187,19 @@ server <- function(input, output) {
     
     sub.df.hov<-df.sub()
     
+   
+    
     sub.df.hov$dist.trav <- distGeo(cbind(sub.df.hov$Lon, sub.df.hov$Lat), trav) / 1e3
     sub.df.hov$dist.trav.int<-cut(sub.df.hov$dist.trav, seq(0, 1200, 50), labels =
                                      seq(25, 1175, 50))
+    sub.df.hov$dist.trav.int<-as.numeric(as.character(sub.df.hov$dist.trav.int))
       
-    sub.df.hov$week <- cut(sub.df.hov$date, breaks="weeks")
+    sub.df.hov$week <- as.Date(cut(sub.df.hov$date, breaks="weeks"))
+    #sub.df.hov$week <- as.numeric(sub.df.hov$week)
     #sub.df.hov$week <- as.Date(sub.df.hov$week, tz="GMT")
     
+    sub.df.hov<-sub.df.hov %>% 
+      dplyr::select(dist.trav.int, week, pCO2, Sal, Tem, cO2)
     
   })
   
@@ -200,11 +207,10 @@ server <- function(input, output) {
     
     sub.df.hov.mean<-df.sub.hov()
     
-    sub.df.hov.mean<-sub.df.hov.mean %>% 
-      dplyr::select(dist.trav.int, week, pCO2) %>% 
-      group_by(dist.trav.int, week) %>% 
-      summarise_all(list(~mean(.,na.rm=TRUE)))# %>% 
-      #as.data.frame() 
+      sub.df.hov.mean<-sub.df.hov.mean %>% 
+      dplyr::group_by(dist.trav.int, week) %>% 
+      summarise_all(list(mean=~mean(.,na.rm=TRUE))) %>% 
+      as.data.frame() 
     
     #sub.df.hov.mean$dist.trav.int<<-as.numeric(as.character(sub.df.hov.mean$dist.trav.int))
     
@@ -214,7 +220,32 @@ server <- function(input, output) {
   #reactive expression df.sub.transect: generates cut dataframe for transect plots
   df.sub.transect<-reactive({
     
-    sub.df.transect<-df.sub()
+    routelist<- as.vector(NULL)
+    
+    if (input$routeE == TRUE)
+      routelist <- c(routelist, "E") else {NULL} 
+    
+    if (input$routeW == TRUE)
+      routelist <- c(routelist, "W") else {NULL} 
+    
+    if(input$routeP == TRUE)
+      routelist <- c(routelist, "P") else {NULL}
+    
+    if(input$routeG == TRUE)
+      routelist <- c(routelist, "G") else {NULL}
+    
+    df %>% 
+      filter(route %in% routelist &
+               date >=input$daterange[1] & date <=(input$daterange[1]+14) & 
+               Lon >= input$lon_low & Lon <= input$lon_high &
+               Lat >=input$lat_low & Lat <= input$lat_high ) %>% 
+      dplyr::select(date,Lon,Lat,pCO2,Tem,Sal, cO2,ID)
+   
+  })
+    
+    df.sub.transect2<-reactive({
+    
+    sub.df.transect<-df.sub.transect()
     
     sub.df.transect$dist.trav<-distGeo(cbind(sub.df.transect$Lon, sub.df.transect$Lat), trav)/1e3
     sub.df.transect$dist.trav.int<-cut(sub.df.transect$dist.trav, seq(0, 1200, 50), labels =
@@ -374,6 +405,8 @@ server <- function(input, output) {
     
     sub.df.hov.data<-df.sub.hov.mean()
     
+    sub.df.hov.data<-as.data.frame(sub.df.hov.data)
+    
   hov1 <-
     sub.df.hov.data %>% 
     filter(!is.na(pCO2_mean)) %>% 
@@ -386,7 +419,7 @@ server <- function(input, output) {
                size=1)+
     scale_x_datetime(expand = c(0,0))+
     scale_y_continuous(expand = c(0,0))+
-    labs(y="Distance to Travemuende [km])")+
+    labs(y="Distance to Travemuende [km]")+
     theme_bw()+
     theme(
       axis.title.x = element_blank(),
@@ -403,9 +436,11 @@ server <- function(input, output) {
     
     sub.df.hov.data<-df.sub.hov.mean()
     
+    sub.df.hov.data<-as.data.frame(sub.df.hov.data)
+    
     hov2 <-
       ggplot(data= sub.df.hov.data)+
-      geom_raster(aes(week, dist.trav.int, fill= mean))+ #changed here: fill = Tem_mean to mean
+      geom_raster(aes(week, dist.trav.int, fill= pCO2_mean))+ #changed here: fill = Tem_mean to mean
       scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("Temperature [C]"))+
       
       #until here working well and looking good
@@ -441,9 +476,11 @@ server <- function(input, output) {
     
     sub.df.hov.data<-df.sub.hov.mean()
     
+    sub.df.hov.data<-as.data.frame(sub.df.hov.data)
+    
     hov3 <-
       ggplot(data= sub.df.hov.data)+
-      geom_raster(aes(week, dist.trav.int, fill= mean))+ #changed here: fill = Sal_mean to mean
+      geom_raster(aes(week, dist.trav.int, fill= pCO2_mean))+ #changed here: fill = Sal_mean to mean
       scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("Salinity[]"))+
       
       #until here working well and looking good
@@ -483,6 +520,8 @@ server <- function(input, output) {
     
     sub.df.hov.data<-df.sub.hov.mean()
     
+    sub.df.hov.data<-as.data.frame(sub.df.hov.data)
+    
     hov4 <-
       ggplot(data= sub.df.hov.data)+
       geom_raster(aes(week, dist.trav.int, fill= mean))+ #changed here: fill = Tem_mean to mean
@@ -514,74 +553,143 @@ server <- function(input, output) {
   # 04e: Transect Plots -------------------------------------------------- 
 
 ### Transect Plot pCO2 ###
-  output$trans_pCO2 <- renderPlotly({
-   
-    sub.df.transect<-df.sub.transect()
+  
+  output$plot_transect <- renderPlotly({
+  
+    plotlist<-NULL
+    sub.df.transect<-df.sub.transect2()
     
-    t1<-sub.df.transect %>%
+    # Transectplot pCO2
+    
+    # t1<-sub.df.transect %>% 
+    #   plot_ly(sub.df.transect, showlegend = FALSE, height = (400*(length(plotlist))), width = 800) %>% 
+    #   add_trace(x= ~sub.df.transect$dist.trav, y=~ pCO2, color= date, type= "line",
+    #             mode= 'markers')+
+    #   scale_color_viridis_d(direction = -1)+
+    #   ylab("pCO2 [ppm]")+
+    #   xlab("Distance to Travemuende [km]")+
+    #   theme_bw()
+    
+     t1<-sub.df.transect %>%
+       group_by(date) %>% 
+       ggplot(aes(x= dist.trav, y= pCO2, color = date), height = 400,  width = 1200)+
+       geom_line()+
+       scale_color_viridis_d(direction = -1)+
+       ylab("pCO2 [ppm]")+
+       xlab("Distance to Travemuende [km]")+
+       theme_bw()+
+       theme(legend.position = "none")
+      
+       
+    
+    #Transectplot Temperature
+    t2<-sub.df.transect %>% 
       group_by(date) %>% 
-      ggplot(aes(x= dist.trav, y= pCO2, color = date))+
+      ggplot(aes(x= dist.trav, y= Tem, color = date), height = 400,  width = 1200)+
+      geom_line()+
+       scale_color_viridis_d(direction = -1)+
+      ylab("Temperature [°C]")+
+      xlab("Distance to Travemuende [km]")+
+      theme_bw()+
+      theme(legend.position = "none")
+       
+    
+    #Transectplot Salinity
+    t3<-sub.df.transect %>% 
+      group_by(date) %>% 
+      ggplot(aes(x= dist.trav, y= Sal, color = date), height = 400,  width = 1200)+
       geom_line()+
       scale_color_viridis_d(direction = -1)+
-      ylab("pCO2 [ppm]")+
+      ylab("Salinity [‰]")+
       xlab("Distance to Travemuende [km]")+
-      theme_bw()
+      theme_bw()+
+      theme(legend.position = "none")
     
-    t1
+    #Transectplot O2
+        t5<-sub.df.transect %>% 
+      group_by(date) %>% 
+      ggplot(aes(x= dist.trav, y= cO2, color = date), height = 400,  width = 1200)+
+      geom_line()+
+      scale_color_viridis_d(direction = -1)+
+      ylab("O2[‰]")+
+      xlab("Distance to Travemuende [km]")+
+          theme_bw()+
+          theme(legend.position = "none")
+        
+    #Plotlist and creation of Subplot    
+    plotlist<-list(t1,t2,t3,t5)
+    
+    subplot(plotlist, nrows= length(plotlist), shareX = TRUE, titleY = TRUE)
   })
-    
-### Transect Plot Temperature ###
-    
-output$trans_temp <- renderPlotly({
   
-  sub.df.transect<-df.sub.transect()
-      
-      t2<-sub.df.transect %>% 
-        group_by(date) %>% 
-        ggplot(aes(x= dist.trav, y= Tem, color = date))+
-        geom_line()+
-        scale_color_brewer(palette="RdGy", direction = -1)+
-        ylab("Temperature [°C]")+
-        xlab("Distance to Travemuende [km]")
-      
-      t2
-    })
-    
-    
-### Transect Plot Salinity ###
-    
-output$trans_sal <- renderPlotly({
-  
-  sub.df.transect<-df.sub.transect()
-        
-        t3<-sub.df.transect %>% 
-          group_by(date) %>% 
-          ggplot(aes(x= dist.trav, y= Sal, color = date))+
-          geom_line()+
-          scale_color_brewer(palette="RdGy", direction = -1)+
-          ylab("Salinity [‰]")+
-          xlab("Distance to Travemuende [km]")
-        
-        
-        t3
-})
-
-### Transect Plot O2 ###
-
-output$trans_o2 <- renderPlotly({
-  
-  sub.df.transect<-df.sub.transect()
-  
-  t5<-sub.df.transect %>% 
-    group_by(date) %>% 
-    ggplot(aes(x= dist.trav, y= cO2, color = date))+
-    geom_line()+
-    scale_color_brewer(palette="RdGy", direction = -1)+
-    ylab("O2[‰]")+
-    xlab("Distance to Travemuende [km]")
-    
-  t5
-})
+#   output$trans_pCO2 <- renderPlotly({
+#    
+#     sub.df.transect<-df.sub.transect2()
+#     
+#     t1<-sub.df.transect %>%
+#       group_by(date) %>% 
+#       ggplot(aes(x= dist.trav, y= pCO2, color = date))+
+#       geom_line()+
+#       scale_color_viridis_d(direction = -1)+
+#       ylab("pCO2 [ppm]")+
+#       xlab("Distance to Travemuende [km]")+
+#       theme_bw()
+#     
+#     t1
+#   })
+#     
+# ### Transect Plot Temperature ###
+#     
+# output$trans_temp <- renderPlotly({
+#   
+#   sub.df.transect<-df.sub.transect2()
+#       
+#       t2<-sub.df.transect %>% 
+#         group_by(date) %>% 
+#         ggplot(aes(x= dist.trav, y= Tem, color = date))+
+#         geom_line()+
+#         scale_color_brewer(palette="RdGy", direction = -1)+
+#         ylab("Temperature [°C]")+
+#         xlab("Distance to Travemuende [km]")
+#       
+#       t2
+#     })
+#     
+#     
+# ### Transect Plot Salinity ###
+#     
+# output$trans_sal <- renderPlotly({
+#   
+#   sub.df.transect<-df.sub.transect2()
+#         
+#         t3<-sub.df.transect %>% 
+#           group_by(date) %>% 
+#           ggplot(aes(x= dist.trav, y= Sal, color = date))+
+#           geom_line()+
+#           scale_color_brewer(palette="RdGy", direction = -1)+
+#           ylab("Salinity [‰]")+
+#           xlab("Distance to Travemuende [km]")
+#         
+#         
+#         t3
+# })
+# 
+# ### Transect Plot O2 ###
+# 
+# output$trans_o2 <- renderPlotly({
+#   
+#   sub.df.transect<-df.sub.transect2()
+#   
+#   t5<-sub.df.transect %>% 
+#     group_by(date) %>% 
+#     ggplot(aes(x= dist.trav, y= cO2, color = date))+
+#     geom_line()+
+#     scale_color_brewer(palette="RdGy", direction = -1)+
+#     ylab("O2[‰]")+
+#     xlab("Distance to Travemuende [km]")
+#     
+#   t5
+# })
 
   
   
@@ -593,7 +701,7 @@ output$trans_o2 <- renderPlotly({
     switch(input$dataset,
            "Time Series Data" = df.sub.timeseries(),
            
-           "Transect Data" = df.sub.transect(),
+           "Transect Data" = df.sub.transect2(),
            
            "Hovmoeller Data" = df.sub.hov()
     )
