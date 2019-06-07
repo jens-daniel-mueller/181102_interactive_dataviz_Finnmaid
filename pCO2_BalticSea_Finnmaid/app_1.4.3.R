@@ -1,6 +1,7 @@
 # This is a Shiny web application. You can run the application by clicking
 # the 'Run App' button above.
-# This app shows the pCO2 measurments - in a given time- and coordinate window,
+# This app shows the pCO2, Temperature, Salinity and cO2 measurments - 
+# in a given time- and coordinate window,
 # chosen by the user- over time. Databasis are continous pCO2 measurments from 
 # the ferry Finmaid starting in June 2003 until today. 
 #
@@ -9,11 +10,7 @@
 library(shiny)
 library(data.table)
 library(tidyverse)
-
-#library(ggplot2)
 library(ggmap)
-#library(lubridate)
-
 library(maps)
 library(mapdata)
 library(plotly)
@@ -21,24 +18,18 @@ library(viridis)
 library(base)
 library(geosphere)
 
-#library(plyr)
-library(dplyr)
-
-
 # 01: load data -- -------------------------------------------------------------
 
 #df <- data.table(read.csv("../Finnmaid_all_2019.csv", sep = ","))
-#df$date<-as.Date(df$date)
 #df$date<-lubridate::ymd_hms(df$date)
 
 df$route<-as.character(df$route)
-x<-c(0,0)
+
 trav<-c(10.8605315,53.9414096)
-#Hel <- c(24.945831, 60.192059)
 
 # 02: map attributes  -----------------------------------------------------------
-#baltic.coastlines<-maps::map(database = "world")#, xlim = c(4, 29), ylim = c(50, 66))
-baltic.coastlines <- ggplot2::map_data('world')#, xlim = c(4, 29), ylim = c(50, 66))
+
+baltic.coastlines <- ggplot2::map_data('world')
 land.colour   <- "grey75"
 border.colour <- "grey10"
 basemap= baltic.coastlines
@@ -47,7 +38,7 @@ xmax= 31.5
 ymin=53.5
 ymax=61
 # definition of routes to plot in map plot
-#I chose one ID for each route (E,W,G,P,S) randomly and saved the corresponding data 
+#I chose one ID for each route (E,W,G,P) randomly and saved the corresponding data 
 # as individual route subsets 
 # This data is used in the depiction of routes in the map as an easy and fast(!) solution
 routeE<-df %>% 
@@ -59,7 +50,6 @@ routeG<-df %>%
 routeP<-df %>% 
   filter(ID == "20160328")
 
-#routeall<-rbind(routeE, routeP, routeG, routeW)
 
 # 03: define UI --------------------------------------------------------------
 ui <- fluidPage(
@@ -76,10 +66,8 @@ ui <- fluidPage(
                label="Select a date range",
                start = as.Date("2003-06-21 17:57:00"),
                end = as.Date(max(df$date, na.rm = TRUE)),
-               #end = as.Date("2018-07-16 05:10:55"),
                min= as.Date("2003-06-21 17:57:00"),
                max= as.Date(max(df$date, na.rm = TRUE)),
-               #max= as.Date("2018-07-16 05:10:55"),
                format= "yyyy/mm/dd",
                separator="to"),
              checkboxInput("routeE", "Select route E", value = TRUE),
@@ -121,11 +109,6 @@ ui <- fluidPage(
                       ),
                         tabPanel("Transektplots",
                                   plotlyOutput("plot_transect", inline = TRUE, height = 1200)
-                                  #plotlyOutput("trans_pCO2"),
-                                  #plotlyOutput("trans_temp"),
-                                  #plotlyOutput("trans_sal"),
-                                  #plotlyOutput("trans_ch4"),
-                                  #plotlyOutput("trans_o2"))#,
                       )
           )
         )
@@ -187,7 +170,6 @@ server <- function(input, output) {
     
     sub.df.hov<-df.sub()
     
-   
     
     sub.df.hov$dist.trav <- distGeo(cbind(sub.df.hov$Lon, sub.df.hov$Lat), trav) / 1e3
     sub.df.hov$dist.trav.int<-cut(sub.df.hov$dist.trav, seq(0, 1200, 50), labels =
@@ -195,27 +177,12 @@ server <- function(input, output) {
     sub.df.hov$dist.trav.int<-as.numeric(as.character(sub.df.hov$dist.trav.int))
       
     sub.df.hov$week <- as.Date(cut(sub.df.hov$date, breaks="weeks"))
-    #sub.df.hov$week <- as.numeric(sub.df.hov$week)
-    #sub.df.hov$week <- as.Date(sub.df.hov$week, tz="GMT")
     
     sub.df.hov<-sub.df.hov %>% 
       dplyr::select(dist.trav.int, week, pCO2, Sal, Tem, cO2)
     
   })
   
-  df.sub.hov.mean<-reactive({
-    
-    sub.df.hov.mean<-df.sub.hov()
-    
-      sub.df.hov.mean<-sub.df.hov.mean %>% 
-      dplyr::group_by(dist.trav.int, week) %>% 
-      summarise_all(list(mean=~mean(.,na.rm=TRUE))) %>% 
-      as.data.frame() 
-    
-    #sub.df.hov.mean$dist.trav.int<<-as.numeric(as.character(sub.df.hov.mean$dist.trav.int))
-    
-    sub.df.hov.mean$week<-as.POSIXct(sub.df.hov.mean$week)
-  })
   
   #reactive expression df.sub.transect: generates cut dataframe for transect plots
   df.sub.transect<-reactive({
@@ -248,11 +215,6 @@ server <- function(input, output) {
     sub.df.transect<-df.sub.transect()
     
     sub.df.transect$dist.trav<-distGeo(cbind(sub.df.transect$Lon, sub.df.transect$Lat), trav)/1e3
-    sub.df.transect$dist.trav.int<-cut(sub.df.transect$dist.trav, seq(0, 1200, 50), labels =
-                                  seq(25, 1175, 50))
-    
-    #sub.df.transect$week <- cut(sub.df.transect$date, breaks="weeks")
-    #sub.df.transect$week <- as.Date(sub.df.transect$week, tz="GMT")
     
     sub.df.transect$date<-as.character(lubridate::ymd(sub.df.transect$ID))
     sub.df.transect<-sub.df.transect %>% 
@@ -274,7 +236,6 @@ server <- function(input, output) {
     p<-ggplot() +
       coord_quickmap(xlim=c(xmin, xmax), ylim=c(ymin, ymax)) +
       geom_polygon(data=basemap, aes(x=long, y=lat, group=group), fill=land.colour, colour = border.colour, lwd=.5)+
-      #geom_rect(data=data.frame(),mapping = aes(xmin= 15, xmax = 20, ymin=55, ymax= 60), fill= "blue", alpha = 0.2)+
       geom_rect(data=data.frame(), 
                 mapping = aes(xmin= input$lon_low, xmax = input$lon_high, 
                               ymin=input$lat_low, ymax= input$lat_high), 
@@ -324,7 +285,6 @@ server <- function(input, output) {
     showticklabels = TRUE)
   h<-list("Distance to Travemuende [km]", showticklabels = TRUE)
   # 04b2: Time Series Plots -----------------------------------------------
-  # Plot Mean pCO2
   output$plot_timeseries <- renderPlotly({
     
     plotlist<- NULL
@@ -403,9 +363,15 @@ server <- function(input, output) {
   
   output$hov_pCO2_mean <- renderPlot({
     
-    sub.df.hov.data<-df.sub.hov.mean()
+    sub.df.hov.data<-df.sub.hov()
     
-    sub.df.hov.data<-as.data.frame(sub.df.hov.data)
+    sub.df.hov.data<-sub.df.hov.data %>% 
+      dplyr::group_by(dist.trav.int, week) %>% 
+      summarise_all(list(mean=~mean(.,na.rm=TRUE))) %>% 
+      as.data.frame() 
+    
+      sub.df.hov.data$dist.trav.int<-as.numeric(as.character(sub.df.hov.data$dist.trav.int))
+      sub.df.hov.data$week<-as.POSIXct(sub.df.hov.data$week)
     
   hov1 <-
     sub.df.hov.data %>% 
@@ -434,39 +400,36 @@ server <- function(input, output) {
 #Hovmoeller Plot Temperatur Mean
   output$hov_temp_mean <- renderPlot({
     
-    sub.df.hov.data<-df.sub.hov.mean()
+    sub.df.hov.data<-df.sub.hov()
     
-    sub.df.hov.data<-as.data.frame(sub.df.hov.data)
+    sub.df.hov.data<- sub.df.hov.data %>% 
+      dplyr::group_by(dist.trav.int, week) %>% 
+      summarise_all(list(mean=~mean(.,na.rm=TRUE))) %>% 
+      as.data.frame() 
     
-    hov2 <-
-      ggplot(data= sub.df.hov.data)+
-      geom_raster(aes(week, dist.trav.int, fill= pCO2_mean))+ #changed here: fill = Tem_mean to mean
-      scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("Temperature [C]"))+
-      
-      #until here working well and looking good
-      #xlim(as.POSIXct("2003/1/1"), as.POSIXct("2018/1/1"))+
+      sub.df.hov.data$dist.trav.int<-as.numeric(as.character( sub.df.hov.data$dist.trav.int))
+      sub.df.hov.data$week<-as.POSIXct( sub.df.hov.data$week)
+    
+    hov2 <-sub.df.hov.data %>% 
+      filter(!is.na(Tem_mean)) %>%
+      ggplot()+
+      geom_raster(aes(week, dist.trav.int, fill= Tem_mean))+ 
+      scale_fill_viridis_c(option= "plasma", name="Temperature [deg C]", direction = 1)+
       geom_vline(xintercept = as.numeric(seq(as.POSIXct("2003/1/1", tz="GMT"), 
                                              as.POSIXct("2018/1/1", tz="GMT"), 
                                              "years")),
                  size=1)+
-      #scale_color_brewer(palette="Set1", name="pCO2 (µatm)")+
-      #                    (name=expression("pCO2[µatm]")+
-      #                   limits=c(100, 600))+
-      scale_x_datetime(date_breaks= "1 year", date_labels = "%Y")+
-      #scale_x_datetime(breaks = seq(as.POSIXct("2004/1/1", tz="GMT"), as.POSIXct("2016/1/1", tz="GMT"), "2 years"),
-      #                expand = c(0,0))+
-      scale_y_continuous(breaks = seq(0, 1000, 50))+
-      labs(y="Distance to Travemuende [km])")+
+      scale_x_datetime(expand = c(0,0))+
+      scale_y_continuous(expand = c(0,0))+
+      labs(y="Distance to Travemuende [km]")+
+      theme_bw()+
       theme(
         axis.title.x = element_blank(),
         legend.position = "bottom",
         legend.key.width = unit(1.3, "cm"),
         legend.key.height = unit(0.3, "cm")
       )
-    
-    
     hov2
-    
   })
   
   
@@ -474,79 +437,73 @@ server <- function(input, output) {
   output$hov_sal_mean <- renderPlot({
     
     
-    sub.df.hov.data<-df.sub.hov.mean()
+    sub.df.hov.data<-df.sub.hov()
     
-    sub.df.hov.data<-as.data.frame(sub.df.hov.data)
+    sub.df.hov.data<- sub.df.hov.data %>% 
+      dplyr::group_by(dist.trav.int, week) %>% 
+      summarise_all(list(mean=~mean(.,na.rm=TRUE))) %>% 
+      as.data.frame() 
     
-    hov3 <-
-      ggplot(data= sub.df.hov.data)+
-      geom_raster(aes(week, dist.trav.int, fill= pCO2_mean))+ #changed here: fill = Sal_mean to mean
-      scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("Salinity[]"))+
-      
-      #until here working well and looking good
-      #xlim(as.POSIXct("2003/1/1"), as.POSIXct("2018/1/1"))+
+    sub.df.hov.data$dist.trav.int<-as.numeric(as.character( sub.df.hov.data$dist.trav.int))
+    sub.df.hov.data$week<-as.POSIXct( sub.df.hov.data$week)
+    
+    hov3 <-sub.df.hov.data %>% 
+      filter(!is.na(Sal_mean)) %>%
+      ggplot()+
+      geom_raster(aes(week, dist.trav.int, fill= Sal_mean))+ 
+      scale_fill_viridis_c(option= "cividis",name="Salinity", direction = 1)+
       geom_vline(xintercept = as.numeric(seq(as.POSIXct("2003/1/1", tz="GMT"), 
                                              as.POSIXct("2018/1/1", tz="GMT"), 
                                              "years")),
                  size=1)+
-      #scale_color_brewer(palette="Set1", name="pCO2 (µatm)")+
-      #                    (name=expression("pCO2[µatm]")+
-      #                   limits=c(100, 600))+
-      scale_x_datetime(date_breaks= "1 year", date_labels = "%Y")+
-      #scale_x_datetime(breaks = seq(as.POSIXct("2004/1/1", tz="GMT"), as.POSIXct("2016/1/1", tz="GMT"), "2 years"),
-      #                expand = c(0,0))+
-      scale_y_continuous(breaks = seq(0, 1000, 50))+
-      labs(y="Distance to Travemuende [km])")+
+      scale_x_datetime(expand = c(0,0))+
+      scale_y_continuous(expand = c(0,0))+
+      labs(y="Distance to Travemuende [km]")+
+      theme_bw()+
       theme(
         axis.title.x = element_blank(),
         legend.position = "bottom",
         legend.key.width = unit(1.3, "cm"),
         legend.key.height = unit(0.3, "cm")
       )
-    
-    
     hov3
-
   })
   
-  
-  
 #Hovmoeller Plot CH4 Mean
-  
   
   
 #Hovmoeller Plot O2
   output$hov_o2_mean <- renderPlot({
     
-    sub.df.hov.data<-df.sub.hov.mean()
+    sub.df.hov.data<-df.sub.hov()
     
-    sub.df.hov.data<-as.data.frame(sub.df.hov.data)
+    sub.df.hov.data<-sub.df.hov.data %>% 
+      dplyr::group_by(dist.trav.int, week) %>% 
+      summarise_all(list(mean=~mean(.,na.rm=TRUE))) %>% 
+      as.data.frame() 
     
-    hov4 <-
-      ggplot(data= sub.df.hov.data)+
-      geom_raster(aes(week, dist.trav.int, fill= mean))+ #changed here: fill = Tem_mean to mean
-      scale_fill_gradientn(colours=c("#fc8d59","#ffffbf","#91bfdb"), name=expression("O2[]"))+
-      #xlim(as.POSIXct("2003/1/1"), as.POSIXct("2018/1/1"))+
+      sub.df.hov.data$dist.trav.int<-as.numeric(as.character(sub.df.hov.data$dist.trav.int))
+      sub.df.hov.data$week<-as.POSIXct(sub.df.hov.data$week)
+    
+    hov4 <-sub.df.hov.data %>% 
+      filter(!is.na(cO2_mean)) %>%
+      ggplot()+
+      geom_raster(aes(week, dist.trav.int, fill= cO2_mean))+ #changed here: fill = Tem_mean to mean
+      scale_fill_viridis_c(option= "cividis", name="cO2 [umol L-1]", direction = 1)+
       geom_vline(xintercept = as.numeric(seq(as.POSIXct("2003/1/1", tz="GMT"), 
                                              as.POSIXct("2018/1/1", tz="GMT"), 
                                              "years")),
                  size=1)+
-      #scale_color_brewer(palette="Set1", name="pCO2 (µatm)")+
-      #                    (name=expression("pCO2[µatm]")+
-      #                   limits=c(100, 600))+
-      scale_x_datetime(date_breaks= "1 year", date_labels = "%Y")+
-      #scale_x_datetime(breaks = seq(as.POSIXct("2004/1/1", tz="GMT"), as.POSIXct("2016/1/1", tz="GMT"), "2 years"),
-      #                expand = c(0,0))+
-      scale_y_continuous(breaks = seq(0, 1000, 50))+
-      labs(y="Distance to Travemuende [km])")+
+      scale_x_datetime(expand = c(0,0))+
+      scale_y_continuous(expand = c(0,0))+
+      labs(y="Distance to Travemuende [km]")+
+      theme_bw()+
       theme(
         axis.title.x = element_blank(),
         legend.position = "bottom",
         legend.key.width = unit(1.3, "cm"),
         legend.key.height = unit(0.3, "cm")
-      )
-    
-    
+)
     hov4
   }) 
   
@@ -555,24 +512,21 @@ server <- function(input, output) {
 ### Transect Plot pCO2 ###
   
   output$plot_transect <- renderPlotly({
-  
+    
     plotlist<-NULL
     sub.df.transect<-df.sub.transect2()
     
-    # Transectplot pCO2
+    #IDEA: instead of error "Subscript out of bounce" a message is to be displayed stating the actual problem
+    #that there are no IDs in the 14 days after start, and anothe startdate has to be picked, not working though
+     validate(
+       need(sub.df.transect$ID, "No data in a 14 days window after the start date, please choose a different start date")
+     )
     
-    # t1<-sub.df.transect %>% 
-    #   plot_ly(sub.df.transect, showlegend = FALSE, height = (400*(length(plotlist))), width = 800) %>% 
-    #   add_trace(x= ~sub.df.transect$dist.trav, y=~ pCO2, color= date, type= "line",
-    #             mode= 'markers')+
-    #   scale_color_viridis_d(direction = -1)+
-    #   ylab("pCO2 [ppm]")+
-    #   xlab("Distance to Travemuende [km]")+
-    #   theme_bw()
+    # Transectplot pCO2
     
      t1<-sub.df.transect %>%
        group_by(date) %>% 
-       ggplot(aes(x= dist.trav, y= pCO2, color = date), height = 400,  width = 1200)+
+       ggplot(aes(x= dist.trav, y= pCO2, color = ID), height = 400,  width = 1200)+
        geom_line()+
        scale_color_viridis_d(direction = -1)+
        ylab("pCO2 [ppm]")+
@@ -580,38 +534,35 @@ server <- function(input, output) {
        theme_bw()+
        theme(legend.position = "none")
       
-       
-    
     #Transectplot Temperature
     t2<-sub.df.transect %>% 
       group_by(date) %>% 
-      ggplot(aes(x= dist.trav, y= Tem, color = date), height = 400,  width = 1200)+
+      ggplot(aes(x= dist.trav, y= Tem, color = ID), height = 400,  width = 1200)+
       geom_line()+
        scale_color_viridis_d(direction = -1)+
-      ylab("Temperature [°C]")+
+      ylab("Temperature [deg C]")+
       xlab("Distance to Travemuende [km]")+
       theme_bw()+
       theme(legend.position = "none")
        
-    
     #Transectplot Salinity
     t3<-sub.df.transect %>% 
       group_by(date) %>% 
-      ggplot(aes(x= dist.trav, y= Sal, color = date), height = 400,  width = 1200)+
+      ggplot(aes(x= dist.trav, y= Sal, color = ID), height = 400,  width = 1200)+
       geom_line()+
       scale_color_viridis_d(direction = -1)+
-      ylab("Salinity [‰]")+
+      ylab("Salinity")+
       xlab("Distance to Travemuende [km]")+
       theme_bw()+
       theme(legend.position = "none")
     
     #Transectplot O2
-        t5<-sub.df.transect %>% 
+      t5<-sub.df.transect %>% 
       group_by(date) %>% 
-      ggplot(aes(x= dist.trav, y= cO2, color = date), height = 400,  width = 1200)+
+      ggplot(aes(x= dist.trav, y= cO2, color = ID), height = 400,  width = 1200)+
       geom_line()+
       scale_color_viridis_d(direction = -1)+
-      ylab("O2[‰]")+
+      ylab("O2[umol L-1]")+
       xlab("Distance to Travemuende [km]")+
           theme_bw()+
           theme(legend.position = "none")
@@ -622,98 +573,34 @@ server <- function(input, output) {
     subplot(plotlist, nrows= length(plotlist), shareX = TRUE, titleY = TRUE)
   })
   
-#   output$trans_pCO2 <- renderPlotly({
-#    
-#     sub.df.transect<-df.sub.transect2()
-#     
-#     t1<-sub.df.transect %>%
-#       group_by(date) %>% 
-#       ggplot(aes(x= dist.trav, y= pCO2, color = date))+
-#       geom_line()+
-#       scale_color_viridis_d(direction = -1)+
-#       ylab("pCO2 [ppm]")+
-#       xlab("Distance to Travemuende [km]")+
-#       theme_bw()
-#     
-#     t1
-#   })
-#     
-# ### Transect Plot Temperature ###
-#     
-# output$trans_temp <- renderPlotly({
-#   
-#   sub.df.transect<-df.sub.transect2()
-#       
-#       t2<-sub.df.transect %>% 
-#         group_by(date) %>% 
-#         ggplot(aes(x= dist.trav, y= Tem, color = date))+
-#         geom_line()+
-#         scale_color_brewer(palette="RdGy", direction = -1)+
-#         ylab("Temperature [°C]")+
-#         xlab("Distance to Travemuende [km]")
-#       
-#       t2
-#     })
-#     
-#     
-# ### Transect Plot Salinity ###
-#     
-# output$trans_sal <- renderPlotly({
-#   
-#   sub.df.transect<-df.sub.transect2()
-#         
-#         t3<-sub.df.transect %>% 
-#           group_by(date) %>% 
-#           ggplot(aes(x= dist.trav, y= Sal, color = date))+
-#           geom_line()+
-#           scale_color_brewer(palette="RdGy", direction = -1)+
-#           ylab("Salinity [‰]")+
-#           xlab("Distance to Travemuende [km]")
-#         
-#         
-#         t3
-# })
-# 
-# ### Transect Plot O2 ###
-# 
-# output$trans_o2 <- renderPlotly({
-#   
-#   sub.df.transect<-df.sub.transect2()
-#   
-#   t5<-sub.df.transect %>% 
-#     group_by(date) %>% 
-#     ggplot(aes(x= dist.trav, y= cO2, color = date))+
-#     geom_line()+
-#     scale_color_brewer(palette="RdGy", direction = -1)+
-#     ylab("O2[‰]")+
-#     xlab("Distance to Travemuende [km]")
-#     
-#   t5
-# })
-
-  
-  
   # 04f: download CSV ------------------------------------------------
   #https://shiny.rstudio.com/articles/download.html  
   
    datasetInput <- reactive({
+     
+     sub.df.hov.data<-df.sub.hov()
+       sub.df.hov.data<-sub.df.hov.data %>% 
+       dplyr::group_by(dist.trav.int, week) %>% 
+       summarise_all(list(mean=~mean(.,na.rm=TRUE))) %>% 
+       as.data.frame() 
+       
+         sub.df.hov.data$dist.trav.int<-as.numeric(as.character(sub.df.hov.data$dist.trav.int))
+         sub.df.hov.data$week<-as.POSIXct(sub.df.hov.data$week)
   
     switch(input$dataset,
            "Time Series Data" = df.sub.timeseries(),
            
            "Transect Data" = df.sub.transect2(),
            
-           "Hovmoeller Data" = df.sub.hov()
-    )
+           "Hovmoeller Data" = sub.df.hov.data
+          )
     })
-
-#output$datatable<- renderTable({
- # datasetInput()
-#})
 
   output$downloadData <- downloadHandler(
     filename = function(){
-    paste(input$dataset, ".csv", sep = "")
+    paste(input$dataset,"_",input$daterange[1],"-", input$daterange[2],"_lon", 
+           input$lon_low,"-", input$lon_high,"_lat", input$lat_low ,"-",
+           input$lat_high , ".csv", sep = "")
       },
     content = function(file){
     write.csv(datasetInput(), file, row.names = FALSE)
