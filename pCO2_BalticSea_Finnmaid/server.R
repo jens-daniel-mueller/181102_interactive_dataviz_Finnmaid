@@ -372,7 +372,7 @@ server <- function(input, output) {
       filter(!is.na(cO2_mean)) %>%
       ggplot()+
       geom_raster(aes(week, dist.trav.int, fill= cO2_mean))+ #changed here: fill = Tem_mean to mean
-      scale_fill_viridis_c(option= "cividis", name="cO2 [umol L-1]", direction = 1)+
+      scale_fill_viridis_c(name="cO2 [umol L-1]", direction = 1)+
       geom_vline(xintercept = as.numeric(seq(as.POSIXct("2003/1/1", tz="GMT"), 
                                              as.POSIXct("2018/1/1", tz="GMT"), 
                                              "years")),

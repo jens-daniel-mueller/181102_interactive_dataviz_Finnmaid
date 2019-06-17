@@ -1,4 +1,18 @@
 #global.R
+
+# 00: load packages -- ---------------------------------------------------------
+library(shiny)
+library(data.table)
+library(tidyverse)
+library(ggmap)
+library(maps)
+library(mapdata)
+library(plotly)
+library(viridis)
+library(base)
+library(geosphere)
+
+# 01: load data -- -------------------------------------------------------------
 df$route<-as.character(df$route)
 
 trav<-c(10.8605315,53.9414096)

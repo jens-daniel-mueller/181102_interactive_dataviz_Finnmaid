@@ -7,16 +7,17 @@
 #
 ##########################################################################
 # 00: load packages -- ---------------------------------------------------------
-library(shiny)
-library(data.table)
-library(tidyverse)
-library(ggmap)
-library(maps)
-library(mapdata)
-library(plotly)
-library(viridis)
-library(base)
-library(geosphere)
+# library(shiny)
+# library(data.table)
+# library(tidyverse)
+# library(plyr)
+# library(ggmap)
+# library(maps)
+# library(mapdata)
+# library(plotly)
+# library(viridis)
+# library(base)
+# library(geosphere)
 
 # 01: load data -- -------------------------------------------------------------
 
