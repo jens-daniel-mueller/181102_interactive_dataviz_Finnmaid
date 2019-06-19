@@ -6,23 +6,16 @@
 # the ferry Finmaid starting in June 2003 until today. 
 #
 ##########################################################################
+
+#ui.R
+
 # 00: load packages -- ---------------------------------------------------------
-# library(shiny)
-# library(data.table)
-# library(tidyverse)
-# library(plyr)
-# library(ggmap)
-# library(maps)
-# library(mapdata)
-# library(plotly)
-# library(viridis)
-# library(base)
-# library(geosphere)
+  
+    #defined in global.R
 
 # 01: load data -- -------------------------------------------------------------
 
-#df <- data.table(read.csv("../Finnmaid_all_2019.csv", sep = ","))
-#df$date<-lubridate::ymd_hms(df$date)
+    #defined in global.R
 
 # 02: map attributes and other values
 
@@ -92,3 +85,7 @@ ui <- fluidPage(
     )
   )
 )
+
+# 04: Server function --------------------------------------------------------------
+
+  #defined in server.R
