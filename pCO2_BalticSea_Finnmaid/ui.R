@@ -26,11 +26,16 @@ ui <- fluidPage(
   fluidRow(
     column(9,
            # Application title
-           titlePanel(title="Baltic Sea Surface Water Observations on VOS Finnmaid"),
+           titlePanel(title="Baltic Sea Surface Water Observations on VOS Finnmaid" 
+                        #helpText(HTML(paste0("Baltic Sea Surface Water Observations on VOS Finnmaid"
+                        #                     ,br(),
+                        #                     "A shiny app compiled in R, written by Lara S. Burchardt and Jens Daniel Müller")))),
+                        ),
            offset = 3),
     fluidRow( 
       column(3, 
              # Sidebar with a slider input for date, lattitude and longitude
+             
              dateRangeInput(
                inputId="daterange",
                label="Select a date range",
@@ -62,6 +67,7 @@ ui <- fluidPage(
              offset = 1),
       # Show plots of the data
       column(8, 
+             textOutput("authors"),  #added to mention authors
              plotOutput("mapPlot"), 
              
              

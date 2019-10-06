@@ -30,7 +30,11 @@
 server <- function(input, output) {
   
   
+  
   # 04a: interactive subset generation ------------------------------------------    
+  output$authors <- renderText({
+    paste("written by Lara S. Burchardt and Jens Daniel Müller")
+  })
   
   #reactive expression df.sub: generates subset of all datapoints for chosen parameters in app
   df.sub <- reactive({
