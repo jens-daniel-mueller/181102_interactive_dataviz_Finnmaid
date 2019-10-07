@@ -63,7 +63,8 @@ ui <- fluidPage(
              selectInput("dataset", "Choose a dataset:",
                          choices = c("Time Series Data", "Hovmoeller Data", "Transect Data")),
              downloadButton("downloadData", "Download"),
-             
+             tags$iframe(style="height:400px; width:100%; scrolling=yes", 
+                         src="manual.pdf"),
              offset = 1),
       # Show plots of the data
       column(8, 
@@ -85,8 +86,10 @@ ui <- fluidPage(
                          ),
                          tabPanel("Transektplots",
                                   plotlyOutput("plot_transect", inline = TRUE, height = 1200)
-                         )
-             )
+                         )#,
+                         #tabPanel("Manual",tags$iframe(style="height:400px; width:100%; scrolling=yes", 
+                        #                               src="manual.pdf"))
+                        )
       )
     )
   )
