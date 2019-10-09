@@ -1,9 +1,36 @@
+# This is a Shiny web application. You can run the application by clicking
+# the 'Run App' button above.
+# This app shows the pCO2, Temperature, Salinity and cO2 measurments - 
+# in a given time- and coordinate window,
+# chosen by the user- over time. Databasis are continous pCO2 measurments from 
+# the ferry Finmaid starting in June 2003 until today. 
+#
+##########################################################################
+
 #global.R
-df$route<-as.character(df$route)
 
+# 00: load packages -- ---------------------------------------------------------
+library(shiny)
+library(data.table)
+library(tidyverse)
+library(ggmap)
+library(maps)
+library(mapdata)
+library(plotly)
+library(viridis)
+library(base)
+library(geosphere)
+
+# 01: load data -- -------------------------------------------------------------
+
+df <- readRDS("df.rds")
+
+# 02:attributes  -----------------------------------------------------------
+tit1 <- "Baltic Sea Surface Water Observations on VOS Finnmaid"
+tit2 <- "A shiny app compiled in R"
+tit3 <- "written by Lara S. Burchardt and Jens Daniel Müller"
+                
 trav<-c(10.8605315,53.9414096)
-
-# 02: map attributes  -----------------------------------------------------------
 
 baltic.coastlines <- ggplot2::map_data('world')
 land.colour   <- "grey75"
@@ -25,3 +52,11 @@ routeG<-df %>%
   filter(ID == "20120727")
 routeP<-df %>% 
   filter(ID == "20160328")
+
+# 03: define ui --------------------------------------------------------------
+
+  #defined in ui.R
+
+# 04: Server function --------------------------------------------------------
+
+  #defined in server.R

@@ -1,9 +1,40 @@
+# This is a Shiny web application. You can run the application by clicking
+# the 'Run App' button above.
+# This app shows the pCO2, Temperature, Salinity and cO2 measurments - 
+# in a given time- and coordinate window,
+# chosen by the user- over time. Databasis are continous pCO2 measurments from 
+# the ferry Finmaid starting in June 2003 until today. 
+#
+##########################################################################
+
+#server.R
+
+# 00: load packages -- ---------------------------------------------------------
+
+    #defined in global.R
+
+# 01: load data -- -------------------------------------------------------------
+
+    #defined in global.R
+
+# 02: map attributes and other values
+
+    #defined in "global.R"
+
+# 03: define UI --------------------------------------------------------------
+
+    #defined in ui.R
+
 # 04: Server function ---------------------------------------------------------
-# Define server logic required to draw mapPlot and scatterPlot for mainpanel
+# Define server logic required to draw mapPlot and other plots for mainpanel
 server <- function(input, output) {
   
   
+  
   # 04a: interactive subset generation ------------------------------------------    
+  output$authors <- renderText({
+    paste("written by Lara S. Burchardt and Jens Daniel Müller")
+  })
   
   #reactive expression df.sub: generates subset of all datapoints for chosen parameters in app
   df.sub <- reactive({
@@ -107,7 +138,7 @@ server <- function(input, output) {
   # 04a: Output Values per point ------------------------------------------------  
   output$ValuesPerPoint <- renderText({
     
-    sub.df.timeseries.data<-df.sub.timeseries()   #means
+    sub.df.timeseries.data<<-df.sub.timeseries()   #means
     sub.df<-df.sub()                              #all observations
     
     paste("One datapoint represents one crossing of the ferry 'Finnmaid'. Data gets collected every minute. Depending on your selection a different number of measurments are averaged to represent the crossing.
@@ -171,7 +202,7 @@ server <- function(input, output) {
   output$plot_timeseries <- renderPlotly({
     
     plotlist<- NULL
-    sub.df.timeseries.data<-df.sub.timeseries()
+    sub.df.timeseries.data<<-df.sub.timeseries()
     
     ### PLOT MEAN pCO2 ###
     
@@ -372,7 +403,7 @@ server <- function(input, output) {
       filter(!is.na(cO2_mean)) %>%
       ggplot()+
       geom_raster(aes(week, dist.trav.int, fill= cO2_mean))+ #changed here: fill = Tem_mean to mean
-      scale_fill_viridis_c(option= "cividis", name="cO2 [umol L-1]", direction = 1)+
+      scale_fill_viridis_c(name="cO2 [umol L-1]", direction = 1)+
       geom_vline(xintercept = as.numeric(seq(as.POSIXct("2003/1/1", tz="GMT"), 
                                              as.POSIXct("2018/1/1", tz="GMT"), 
                                              "years")),

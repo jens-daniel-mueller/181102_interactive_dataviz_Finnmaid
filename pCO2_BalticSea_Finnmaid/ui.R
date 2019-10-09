@@ -6,22 +6,16 @@
 # the ferry Finmaid starting in June 2003 until today. 
 #
 ##########################################################################
+
+#ui.R
+
 # 00: load packages -- ---------------------------------------------------------
-library(shiny)
-library(data.table)
-library(tidyverse)
-library(ggmap)
-library(maps)
-library(mapdata)
-library(plotly)
-library(viridis)
-library(base)
-library(geosphere)
+  
+    #defined in global.R
 
 # 01: load data -- -------------------------------------------------------------
 
-#df <- data.table(read.csv("../Finnmaid_all_2019.csv", sep = ","))
-#df$date<-lubridate::ymd_hms(df$date)
+    #defined in global.R
 
 # 02: map attributes and other values
 
@@ -32,11 +26,16 @@ ui <- fluidPage(
   fluidRow(
     column(9,
            # Application title
-           titlePanel(title="Baltic Sea Surface Water Observations on VOS Finnmaid"),
+           titlePanel(title="Baltic Sea Surface Water Observations on VOS Finnmaid" 
+                        #helpText(HTML(paste0("Baltic Sea Surface Water Observations on VOS Finnmaid"
+                        #                     ,br(),
+                        #                     "A shiny app compiled in R, written by Lara S. Burchardt and Jens Daniel Müller")))),
+                        ),
            offset = 3),
     fluidRow( 
       column(3, 
              # Sidebar with a slider input for date, lattitude and longitude
+             
              dateRangeInput(
                inputId="daterange",
                label="Select a date range",
@@ -64,10 +63,12 @@ ui <- fluidPage(
              selectInput("dataset", "Choose a dataset:",
                          choices = c("Time Series Data", "Hovmoeller Data", "Transect Data")),
              downloadButton("downloadData", "Download"),
-             
+             tags$iframe(style="height:400px; width:100%; scrolling=yes", 
+                         src="manual.pdf"),
              offset = 1),
       # Show plots of the data
       column(8, 
+             textOutput("authors"),  #added to mention authors
              plotOutput("mapPlot"), 
              
              
@@ -85,9 +86,15 @@ ui <- fluidPage(
                          ),
                          tabPanel("Transektplots",
                                   plotlyOutput("plot_transect", inline = TRUE, height = 1200)
-                         )
-             )
+                         )#,
+                         #tabPanel("Manual",tags$iframe(style="height:400px; width:100%; scrolling=yes", 
+                        #                               src="manual.pdf"))
+                        )
       )
     )
   )
 )
+
+# 04: Server function --------------------------------------------------------------
+
+  #defined in server.R
