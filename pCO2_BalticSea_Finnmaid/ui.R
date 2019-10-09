@@ -27,9 +27,6 @@ ui <- fluidPage(
     column(9,
            # Application title
            titlePanel(title="Baltic Sea Surface Water Observations on VOS Finnmaid" 
-                        #helpText(HTML(paste0("Baltic Sea Surface Water Observations on VOS Finnmaid"
-                        #                     ,br(),
-                        #                     "A shiny app compiled in R, written by Lara S. Burchardt and Jens Daniel Müller")))),
                         ),
            offset = 3),
     fluidRow( 
@@ -57,13 +54,15 @@ ui <- fluidPage(
                           min= 53, max = 60, value = 57.5),             
              numericInput("lon_low", label = "West. box limit [deg E]",
                           min= 10, max = 30, value = 19.5),
-             submitButton("Apply Change"),
+             
              img(src="blank_space.png", width = "100%"),
-             img(src="finnmaid.png", width = "100%"),
+             img(src="FINNMAID.tiff", width = "100%"),
              selectInput("dataset", "Choose a dataset:",
                          choices = c("Time Series Data", "Hovmoeller Data", "Transect Data")),
              downloadButton("downloadData", "Download"),
-             tags$iframe(style="height:400px; width:100%; scrolling=yes", 
+             img(src="blank_space.png", width = "100%"),
+             submitButton("Apply Change"),
+             tags$iframe(style="height:4px; width:1%; scrolling=yes", 
                          src="manual.pdf"),
              offset = 1),
       # Show plots of the data
@@ -86,11 +85,9 @@ ui <- fluidPage(
                          ),
                          tabPanel("Transektplots",
                                   plotlyOutput("plot_transect", inline = TRUE, height = 1200)
-                         )#,
-                         #tabPanel("Manual",tags$iframe(style="height:400px; width:100%; scrolling=yes", 
-                        #                               src="manual.pdf"))
-                        )
-      )
+                                  )
+                         )
+            )
     )
   )
 )

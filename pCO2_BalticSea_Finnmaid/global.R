@@ -26,10 +26,7 @@ library(geosphere)
 df <- readRDS("df.rds")
 
 # 02:attributes  -----------------------------------------------------------
-tit1 <- "Baltic Sea Surface Water Observations on VOS Finnmaid"
-tit2 <- "A shiny app compiled in R"
-tit3 <- "written by Lara S. Burchardt and Jens Daniel Müller"
-                
+
 trav<-c(10.8605315,53.9414096)
 
 baltic.coastlines <- ggplot2::map_data('world')
