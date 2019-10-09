@@ -1,0 +1,9 @@
+Lara
+
+- move data set selection on to of "apply changes" button
+- update FINNMAID.tiff figure
+- revise manual
+
+Jens
+
+-provide bathymetric map
